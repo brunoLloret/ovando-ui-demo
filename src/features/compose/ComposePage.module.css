@@ -1,0 +1,119 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.spineWrap {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.1);
+  margin-bottom: 12px;
+}
+.seedChip {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 4px 11px;
+  box-shadow: 2px 2px 0 0 var(--ink);
+}
+.narrator {
+  padding: 8px 12px;
+  border-left: 2px solid var(--slate);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-style: italic;
+  min-height: 19px;
+  margin-bottom: 6px;
+}
+.readiness {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--slate);
+  margin-bottom: 6px;
+}
+.process {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-left: 6px solid var(--ochre);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  margin-bottom: 8px;
+}
+.processStep {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ochre);
+}
+.processStage {
+  font-family: var(--font-struct);
+  font-size: 13px;
+  color: var(--ink);
+}
+.processNarr {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--muted);
+}
+.error {
+  color: var(--danger);
+  font-family: var(--font-struct);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.stillHere {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 2px solid var(--slate);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+}
+.stillHereBtn {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--card);
+  background: var(--slate);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.stageNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.1);
+}
+.stageHere {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+}
+.roomFrame {
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 0 var(--ink);
+  padding: 22px 24px;
+  min-height: 220px;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "field-of-potential-meaning",
+  "version": "0.1.0",
+  "description": "React UI for the Field of Potential Meaning — a workshop for the deep structure of a story. Interface only; the generation engine is a separate service.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^7.1.0"
+  }
+}

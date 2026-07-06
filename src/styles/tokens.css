@@ -1,0 +1,29 @@
+/* Design tokens — the single source of truth for the Notation visual system.
+   Ported verbatim from the current UI so the React client is visually identical.
+   Every component references these vars; never hard-code a colour or font. */
+:root {
+  /* surfaces */
+  --page: #efede8;
+  --canvas: #e7e4dd;
+  --card: #fbfaf6;
+  --render-bg: #efeee9;
+  --render-fill: #e4e1d8;
+
+  /* ink + accents */
+  --ink: #1a1a1a;
+  --slate: #4a4a6a;
+  --ochre: #c08a2e; /* RESERVED: primary/Generate actions only */
+  --muted: #8a857c;
+  --dashed: #b8b3a8;
+  --danger: #b04a3a;
+
+  /* type */
+  --font-prose: "Source Serif 4", Georgia, serif;
+  --font-struct: "JetBrains Mono", ui-monospace, monospace;
+  --font-ui: "Inter", system-ui, sans-serif;
+
+  /* geometry + physics */
+  --radius: 6px;
+  --card-radius: 9px;
+  --key-shadow: 3px;
+}

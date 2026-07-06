@@ -1,0 +1,209 @@
+.room {
+  min-height: 200px;
+}
+.title {
+  font-family: var(--font-struct);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.1);
+}
+.muted {
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.setup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: flex-end;
+}
+.poles {
+  font-family: var(--font-struct);
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.rel {
+  color: var(--slate);
+  margin: 0 4px;
+}
+.kindChip {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--slate);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 6px;
+}
+.schema {
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--slate);
+  margin-bottom: 6px;
+}
+.prose {
+  font-family: var(--font-prose);
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.textarea {
+  width: 100%;
+  min-height: 200px;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  line-height: 1.55;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: inset 2px 2px 0 0 rgba(26, 26, 26, 0.08);
+}
+.sporeBank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.spore {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--slate);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.forceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.forceCard {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-struct);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--card-radius);
+  box-shadow: var(--key-shadow) var(--key-shadow) 0 0 var(--ink);
+  padding: 10px 13px;
+  cursor: pointer;
+  transition:
+    transform 0.06s,
+    box-shadow 0.06s;
+}
+.forceCard:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ink);
+}
+.forceWant {
+  font-family: var(--font-prose);
+  font-size: 13px;
+  color: var(--slate);
+}
+.chip {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--ink);
+  background: var(--render-fill);
+  border-radius: 4px;
+  padding: 3px 8px;
+}
+.section {
+  border-left: 2px solid var(--dashed);
+  padding: 4px 0 4px 12px;
+  margin-bottom: 12px;
+}
+.sectionMeta {
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+.planDetails {
+  margin-top: 8px;
+}
+.planSummary {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.planSummary:hover {
+  color: var(--ink);
+}
+.planGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 4px;
+}
+.planRow {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.planKey {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--slate);
+  min-width: 80px;
+  text-align: right;
+}
+.planVal {
+  font-family: var(--font-prose);
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+  flex: 1;
+}
+.builtRow {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--dashed);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.builtRow:hover {
+  border-color: var(--slate);
+}
+.work {
+  white-space: pre-wrap;
+  font-family: var(--font-prose);
+  font-size: 14.5px;
+  line-height: 1.6;
+  background: var(--render-bg);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  max-height: 460px;
+  overflow: auto;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

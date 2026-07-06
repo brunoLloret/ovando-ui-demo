@@ -1,0 +1,26 @@
+.details {
+  margin: 6px 0;
+}
+.summary {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+  cursor: pointer;
+}
+.summary:hover {
+  color: var(--ink);
+}
+.pre {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--render-bg);
+  border: 1px solid var(--dashed);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  overflow: auto;
+  max-height: 460px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

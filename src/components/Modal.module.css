@@ -1,0 +1,39 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.card {
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--card-radius);
+  box-shadow: 5px 5px 0 0 var(--ink);
+  padding: 18px 20px;
+  width: 100%;
+  max-width: 440px;
+}
+.wide {
+  max-width: 680px;
+}
+.title {
+  font-family: var(--font-struct);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.body {
+  font-family: var(--font-ui);
+}
+.footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}

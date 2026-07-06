@@ -1,0 +1,60 @@
+.btn {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 7px 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: var(--key-shadow) var(--key-shadow) 0 0 var(--ink);
+  transition:
+    transform 0.06s,
+    box-shadow 0.06s,
+    background 0.14s;
+}
+.btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ink);
+}
+.btn:active {
+  transform: translate(var(--key-shadow), var(--key-shadow));
+  box-shadow: 0 0 0 0 var(--ink);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--key-shadow) var(--key-shadow) 0 0 var(--ink);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--slate);
+  outline-offset: 3px;
+}
+
+/* neutral pushable key — the default */
+.key {
+}
+
+/* ochre primary — reserved for Generate-class actions */
+.primary {
+  background: var(--ochre);
+  color: var(--card);
+}
+
+/* borderless, for inline secondary actions */
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--slate);
+  padding: 4px 6px;
+}
+.ghost:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--ink);
+}

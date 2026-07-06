@@ -1,0 +1,18 @@
+.bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.spore {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--page);
+  border: 1px solid var(--slate);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.spore:hover {
+  background: var(--render-fill);
+}

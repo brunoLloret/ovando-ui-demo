@@ -1,0 +1,112 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.counter {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+}
+.spacer {
+  flex: 1;
+}
+.words {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.err {
+  color: var(--danger);
+  font-family: var(--font-struct);
+  font-size: 12px;
+  margin: 6px 0;
+}
+.section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(26, 26, 26, 0.1);
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.h {
+  font-family: var(--font-struct);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.relControls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.writeOwn {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.relCard {
+  border: 1px solid var(--dashed);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.established {
+  border: 2px solid var(--ochre);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.establishedTag {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ochre);
+  margin-bottom: 6px;
+}
+.props {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.subActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.subCard {
+  border-left: 2px solid var(--dashed);
+  padding: 4px 0 4px 12px;
+  margin-bottom: 8px;
+}
+.subHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.subWord {
+  font-family: var(--font-struct);
+  font-size: 14px;
+  color: var(--ink);
+}
+.subFrom {
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--slate);
+}

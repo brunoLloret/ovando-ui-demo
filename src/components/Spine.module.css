@@ -1,0 +1,144 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  font-family: var(--font-struct);
+}
+.side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.spine {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 26px;
+  padding: 6px 8px 0;
+}
+.line {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 29px;
+  height: 2px;
+  background: #cfcabf;
+  z-index: 0;
+}
+.travel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.cell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  width: 52px;
+}
+.node {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 4px solid var(--ink);
+  background: var(--card);
+  box-shadow: 3px 3px 0 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink);
+  transition:
+    transform 0.06s,
+    box-shadow 0.06s;
+}
+.node:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ink);
+}
+.done {
+  opacity: 0.6;
+}
+.paused {
+  transform: translate(3px, 3px);
+  box-shadow: inset 3px 3px 0 0 rgba(26, 26, 26, 0.3);
+  background: #dedad0;
+}
+.accent {
+  background: var(--ochre);
+}
+.current {
+  opacity: 1;
+  transform: translate(3px, 3px);
+  box-shadow: inset 3px 3px 0 0 rgba(26, 26, 26, 0.3);
+  background: #dedad0;
+  outline: 2px solid var(--slate);
+  outline-offset: 3px;
+}
+.node:focus-visible {
+  outline: 2px solid var(--slate);
+  outline-offset: 3px;
+}
+.cap {
+  font-size: 9.5px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.2;
+}
+.capN {
+  color: #b7b2a8;
+}
+.badge {
+  position: absolute;
+  top: -4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  border: 2px solid var(--ink);
+  border-radius: 9px;
+  background: var(--card);
+  font-size: 9px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  z-index: 2;
+}
+.glyph {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+}
+.fdot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--slate);
+  transform: translate(-50%, -50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .node,
+  .travel {
+    transition: none;
+  }
+}

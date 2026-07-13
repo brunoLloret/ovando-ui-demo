@@ -1,3 +1,7 @@
+
+
+https://github.com/user-attachments/assets/b8381ef0-bc10-44d9-aa9a-a0960534bc44
+
 # Field of Potential Meaning — UI
 
 A React + TypeScript interface for a writing method that treats a story as a **field of

@@ -67,7 +67,7 @@ function WordChip({ nodeId, slot, value, onSwap, onSetWord, onPick }: WordChipPr
         const src = JSON.parse(raw) as { id: string; slot: "a" | "b" };
         onSwap(src.id, src.slot, nodeId, slot);
       }}
-      title="click to edit · drag a spore here · drag onto another word to swap"
+      title="click to open · drag a spore here · drag onto another word to swap"
     >
       {value || "＋ add"}
     </span>
@@ -77,6 +77,10 @@ function WordChip({ nodeId, slot, value, onSwap, onSetWord, onPick }: WordChipPr
 /** One node in the chain: drag the grip to reorder, drag a word onto another to swap; also edit/remove. */
 export function NodeCard({ node, index, total, onEdit, onRemove, onMove, onReorder, onSwap, onSetWord, onInspect }: NodeCardProps) {
   const [over, setOver] = useState(false);
+
+  // When a detail inspector exists (the Field), all content-editing lives there — clicking a node or word
+  // opens the Node room instead of an in-page modal. Without one (the Spore Explorer), fall back to the modal.
+  const openNode = onInspect ?? (() => onEdit(node.id));
 
   return (
     <div
@@ -117,9 +121,9 @@ export function NodeCard({ node, index, total, onEdit, onRemove, onMove, onReord
         <span className={styles.ordinal}>{index + 1}</span>
       )}
       <div className={styles.words}>
-        <WordChip nodeId={node.id} slot="a" value={node.a} onSwap={onSwap} onSetWord={onSetWord} onPick={() => onEdit(node.id)} />
+        <WordChip nodeId={node.id} slot="a" value={node.a} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} />
         <span className={styles.rel}>↔</span>
-        <WordChip nodeId={node.id} slot="b" value={node.b} onSwap={onSwap} onSetWord={onSetWord} onPick={() => onEdit(node.id)} />
+        <WordChip nodeId={node.id} slot="b" value={node.b} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} />
       </div>
       <div className={styles.controls}>
         <Button variant="ghost" onClick={() => onMove(node.id, -1)} disabled={index === 0} title="move up" aria-label="move up">
@@ -128,9 +132,12 @@ export function NodeCard({ node, index, total, onEdit, onRemove, onMove, onReord
         <Button variant="ghost" onClick={() => onMove(node.id, 1)} disabled={index === total - 1} title="move down" aria-label="move down">
           ↓
         </Button>
-        <Button variant="ghost" onClick={() => onEdit(node.id)} title="edit" aria-label="edit">
-          ✎
-        </Button>
+        {/* the ✎ modal is only the fallback when there's no detail inspector (Spore Explorer); in the Field, the ordinal/words open the Node room */}
+        {!onInspect && (
+          <Button variant="ghost" onClick={() => onEdit(node.id)} title="edit" aria-label="edit">
+            ✎
+          </Button>
+        )}
         <Button variant="ghost" onClick={() => onRemove(node.id)} title="remove" aria-label="remove">
           ✕
         </Button>

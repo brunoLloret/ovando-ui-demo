@@ -26,4 +26,5 @@
   --radius: 6px;
   --card-radius: 9px;
   --key-shadow: 3px;
+  --tabs-h: 39px; /* height of the sticky app tab bar — the compose bar sticks just below it */
 }

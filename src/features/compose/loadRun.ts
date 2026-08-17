@@ -7,6 +7,8 @@ export interface HydratedRun {
   partner: string;
   scale: number;
   nodePairs: NodePair[];
+  /** The run's field of charged words — its keys, plus every node word — to repopulate the Vision spore bank. */
+  spores: string[];
 }
 
 /**
@@ -39,6 +41,13 @@ export function hydrateFromState(st: SavedState): HydratedRun {
     coordinate: s.coordinate,
     prose: s.prose,
     sceneTitle: s.scene_title,
+    actant: s.actant,
+    situation: s.situation,
+    entryPoint: s.entryPoint,
+    objective: s.objective,
+    obstacle: s.obstacle,
+    innerExperience: s.innerExperience,
+    unsaid: s.unsaid,
   }));
 
   const rooms: RoomsState = {
@@ -53,11 +62,15 @@ export function hydrateFromState(st: SavedState): HydratedRun {
     frozenAt: null,
   };
 
+  // the field of charged words: the keys (if any) + every node word, deduped — repopulates the spore bank
+  const spores = [...new Set([...(st._keys ?? []), ...chain.flatMap((n) => [n.a, n.b])])].filter((w) => w && w !== "?");
+
   return {
     rooms,
     seed: first?.a ?? "",
     partner: first?.b ?? "",
     scale: chain.length || 3,
     nodePairs: chain.map((n) => ({ a: n.a, b: n.b })),
+    spores,
   };
 }

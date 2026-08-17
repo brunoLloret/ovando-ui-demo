@@ -1,12 +1,38 @@
 .page {
   max-width: 860px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 16px 24px 24px;
 }
+/* the unified compose bar — sticks just below the app tab bar, never scrolls away */
 .spineWrap {
-  padding-bottom: 14px;
+  position: sticky;
+  top: var(--tabs-h, 39px);
+  z-index: 20;
+  background: var(--page);
+  padding: 12px 0;
   border-bottom: 1px solid rgba(26, 26, 26, 0.1);
   margin-bottom: 12px;
+}
+.barPhone {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 10px 12px 24px;
+  }
+  .barDesktop {
+    display: none;
+  }
+  .barPhone {
+    display: block;
+  }
+  .spineWrap {
+    padding: 10px 0;
+  }
+  .roomFrame {
+    padding: 16px 14px;
+  }
 }
 .seedChip {
   font-family: var(--font-struct);

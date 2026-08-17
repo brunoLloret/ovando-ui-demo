@@ -3,6 +3,11 @@
   border-bottom: 1px solid var(--ink);
   padding: 0 20px;
   gap: 2px;
+  /* the unified top bar — always present, never scrolls away */
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--page);
 }
 .tab {
   font-family: var(--font-struct);

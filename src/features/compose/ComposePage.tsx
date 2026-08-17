@@ -1,31 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Spine, Toggle, type SpineHandle, type SpineStation } from "../../components";
+import { Button, Picker, Spine, type SpineHandle, type SpineStation } from "../../components";
 import { api } from "../../lib/api";
-import type { RunControllers } from "../../lib/types";
+import { useMode, setActiveFixture, type ReplayManifestEntry } from "../../lib/mode";
+import { getKey } from "../../lib/keys";
+import type { ChoiceResult, DramatizeBody, Force } from "../../lib/types";
 import { useSandboxRun } from "../run";
 import { useNodeChain, type NodePair } from "../nodes";
 import { useComposeRooms, type RoomsState } from "./roomsState";
 import { hydrateFromState } from "./loadRun";
 import { narrate } from "./narrate";
 import { ChoiceCard } from "./ChoiceCard";
-import { DEFAULT_CONTROLLERS, type Controllers } from "./types";
+import { DEFAULT_CONTROLLERS, MODEL_OPTIONS, type Controllers } from "./types";
 import { VisionRoom } from "./rooms/VisionRoom";
 import { NodeInspector } from "./rooms/NodeInspector";
 import { FieldRoom } from "./rooms/FieldRoom";
 import { ForcesRoom } from "./rooms/ForcesRoom";
 import { TellingRoom } from "./rooms/TellingRoom";
 import { BibleRoom } from "./rooms/BibleRoom";
+import { RawTrace } from "./RawTrace";
+import { GlobalContext } from "./GlobalContext";
+import { StationStepper } from "./StationStepper";
 import styles from "./ComposePage.module.css";
 
 const STAGE_ORDER = ["vision", "node", "field", "forces", "telling", "bible"] as const;
-const STAGE_SHORT: Record<string, string> = {
-  vision: "Vision",
-  node: "Node",
-  field: "Field",
-  forces: "Forces",
-  telling: "Telling",
-  bible: "Bible",
-};
 const STAGE_LABEL: Record<string, string> = {
   vision: "Vision — the seed becomes a material field",
   node: "First node — two words, one relation",
@@ -49,12 +46,14 @@ function stationForStep(step: string): string {
       return "field";
     case "dramatize":
       return "forces";
+    case "actions":
     case "plan":
     case "cast":
     case "section":
     case "edition":
       return "telling";
     case "run":
+    case "done": // render finished — headed to Bible (the work-guard holds focus until work exists)
       return "bible";
     default:
       return "vision";
@@ -67,13 +66,15 @@ function stationForStep(step: string): string {
  * the run, and joints surface as ChoiceCards when "I pick" is on. The Field is the NodeChainEditor.
  */
 export interface ComposePageProps {
-  /** Request to (re)load a saved run into the rooms, or reset to fresh. Nonce forces re-fire. */
   loadRequest?: { run: string | null; nonce: number };
+  onNeedKey?: () => void;
 }
 
-export function ComposePage({ loadRequest }: ComposePageProps = {}) {
+export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   const [controllers, setControllers] = useState<Controllers>(DEFAULT_CONTROLLERS);
-  const [pick, setPick] = useState(false);
+  // Joints/pauses are disabled for now — generation runs step by step through the room buttons
+  // (Field → Forces "generate the forces" → Telling "write the story"), so runs never pause.
+  const pick = false;
   const chain = useNodeChain([]);
   const nodePairs = useMemo<NodePair[]>(() => chain.nodes.map((n) => ({ a: n.a, b: n.b })), [chain.nodes]);
   const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
@@ -89,13 +90,50 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
   const rooms = run.events.length > 0 ? derivedRooms : (loadedRooms ?? derivedRooms);
   const spineRef = useRef<SpineHandle>(null);
   const prevChain = useRef(0);
+  // remember the chain signature we last built forces for, so an unchanged chain reuses the saved
+  // run (no rebuild — the "Field repopulates" fix); a changed chain rebuilds.
+  const builtRef = useRef<{ sig: string; run: string } | null>(null);
+  const pendingSig = useRef<string | null>(null);
+  // the editable forces layer (station 4 workbench): starts from the generated forces, then reshaped
+  const [forcesEdit, setForcesEdit] = useState<Force[] | null>(null);
+  const [forcesBusy, setForcesBusy] = useState(false);
+
+  const mode = useMode();
+  const [manifest, setManifest] = useState<ReplayManifestEntry[]>([]);
+  const [selectedReplay, setSelectedReplay] = useState("");
+
+  useEffect(() => {
+    if (mode !== "replay") return;
+    fetch("/replays/index.json")
+      .then((r) => r.json() as Promise<ReplayManifestEntry[]>)
+      .then((m) => { setManifest(m); if (m.length > 0 && !selectedReplay) setSelectedReplay(m[0].name); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
+
+  const watchReplay = useCallback(async () => {
+    if (!selectedReplay) return;
+    try {
+      const events = await fetch(`/replays/${selectedReplay}.json`).then((r) => r.json());
+      setActiveFixture(events as Parameters<typeof setActiveFixture>[0]);
+      setFormError(null);
+      setLoadedRooms(null);
+      void run.start({ seed: selectedReplay, manual: false });
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Failed to load replay");
+    }
+  }, [selectedReplay, run]);
 
   const patchControllers = useCallback((patch: Partial<Controllers>) => setControllers((c) => ({ ...c, ...patch })), []);
 
   // focus follows the run
   useEffect(() => {
-    if (rooms.phase) setCurrent(stationForStep(rooms.phase));
-  }, [rooms.phase]);
+    if (!rooms.phase) return;
+    const station = stationForStep(rooms.phase);
+    // the "run start" ping maps to Bible — don't yank focus to step 6 until the work actually exists
+    if (station === "bible" && !rooms.bible.work) return;
+    setCurrent(station);
+  }, [rooms.phase, rooms.bible.work]);
 
   // feed the field glyph each time a node completes
   useEffect(() => {
@@ -107,8 +145,23 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
   // still on Vision) — pull focus to where the joint belongs so the card isn't over the wrong room
   useEffect(() => {
     if (!run.pendingChoice) return;
-    setCurrent(run.pendingChoice.at === "match" ? "forces" : "node");
+    const at = run.pendingChoice.at;
+    if (at === "telling") setCurrent("telling");
+    else if (at === "match" || at === "registers" || at === "forces") setCurrent("forces");
+    else setCurrent("node");
   }, [run.pendingChoice]);
+
+  // the telling joint carries the room's montage/pov/length back to the run
+  const answerChoice = useCallback(
+    (result: ChoiceResult) => {
+      if (run.pendingChoice?.at === "telling") {
+        run.answer({ ...result, controls: { format: controllers.format, pov: controllers.pov, words: controllers.words } });
+      } else {
+        run.answer(result);
+      }
+    },
+    [run, controllers.format, controllers.pov, controllers.words],
+  );
 
   // open a saved run into the rooms, or reset to a fresh project (driven by loadRequest.nonce)
   useEffect(() => {
@@ -133,6 +186,7 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
         setLoadedRooms(h.rooms);
         setControllers((c) => ({ ...c, seed: h.seed, partner: h.partner, scale: h.scale }));
         chain.setAll(h.nodePairs);
+        setSpores(h.spores); // repopulate the Vision spore bank from the run's word field
         setCurrent("bible");
       })
       .catch((e) => alive && setFormError(e instanceof Error ? e.message : String(e)));
@@ -151,32 +205,76 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
     [spores, visionText],
   );
 
-  const generate = useCallback(() => {
-    // only complete nodes go to the run; each may carry a relation established in the node room
+  // once a forces-only run establishes its name, remember it against the chain signature we built it
+  // from — so pressing "regenerate the forces" on an UNCHANGED chain reuses it instead of rebuilding.
+  useEffect(() => {
+    if (run.runName && pendingSig.current) {
+      builtRef.current = { sig: pendingSig.current, run: run.runName };
+      pendingSig.current = null;
+    }
+  }, [run.runName]);
+
+  // Station 4: generate the forces from the current chain, WITHOUT rendering the whole story.
+  const generateForces = useCallback(() => {
+    if (mode === "live" && !getKey()) { onNeedKey?.(); return; }
     const runPairs = chain.nodes
       .filter((n) => n.a.trim() && n.b.trim())
-      .map((n) => ({ a: n.a, b: n.b, ...(n.relation ? { relation: n.relation } : {}) }));
-    const usePairs = runPairs.length > 0;
-    const seed = usePairs ? runPairs[0].a : controllers.seed.trim();
-    if (!seed) {
-      setFormError("Define a node (two words) in the Field, or type a seed.");
+      .map((n) => ({ a: n.a, b: n.b, ...(n.relations?.length ? { relation: n.relations[0] } : {}) }));
+    if (runPairs.length === 0) {
+      setFormError("Define at least one node (two words) first.");
       setCurrent("node");
       return;
     }
     setFormError(null);
-    setLoadedRooms(null); // a fresh run's events take over the rooms
-    const body: RunControllers = {
-      seed,
-      partner: usePairs ? runPairs[0].b || undefined : controllers.partner.trim() || undefined,
-      scale: usePairs ? runPairs.length : controllers.scale,
-      format: controllers.format,
-      pov: controllers.pov,
-      words: controllers.words,
-      manual: true,
-      nodePairs: usePairs ? runPairs : undefined,
-    };
-    void run.start(body);
-  }, [chain, controllers, run]);
+    setLoadedRooms(null);
+    const sig = JSON.stringify(runPairs.map((p) => [p.a, p.b, p.relation?.schema ?? ""]));
+    const reuse = builtRef.current && builtRef.current.sig === sig ? builtRef.current.run : undefined;
+    if (!reuse) pendingSig.current = sig; // record against the runName this build produces
+    const body: DramatizeBody = reuse
+      ? { run: reuse, manual: pick, userText: visionText.trim() || undefined, model: controllers.model }
+      : { seed: runPairs[0].a, partner: runPairs[0].b || undefined, scale: runPairs.length, manual: pick, nodePairs: runPairs, userText: visionText.trim() || undefined, model: controllers.model };
+    void run.dramatizeStage(body);
+  }, [chain, run, pick, visionText, controllers.model]);
+
+  // the editable forces reset whenever a fresh dramatization arrives (a new/regenerated whole set)
+  useEffect(() => {
+    setForcesEdit(rooms.forces?.agents ? [...rooms.forces.agents] : null);
+  }, [rooms.forces]);
+  const effectiveForces = forcesEdit ?? rooms.forces?.agents ?? [];
+
+  const discardForce = useCallback((i: number) => {
+    setForcesEdit((f) => (f ?? rooms.forces?.agents ?? []).filter((_, j) => j !== i));
+  }, [rooms.forces]);
+
+  const addForce = useCallback(() => {
+    const rn = run.runName ?? loadRequest?.run;
+    if (!rn) return;
+    const existing = forcesEdit ?? rooms.forces?.agents ?? [];
+    setForcesBusy(true);
+    setFormError(null);
+    api.forceGenerate({ run: rn, mode: "new", existing, count: 1, userText: visionText.trim() || undefined, model: controllers.model })
+      .then((r) => { if (r.agents.length) setForcesEdit([...existing, ...r.agents]); })
+      .catch((e) => setFormError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setForcesBusy(false));
+  }, [run.runName, loadRequest?.run, forcesEdit, rooms.forces, visionText, controllers.model]);
+
+  const regenerateForces = useCallback((indices: number[]) => {
+    const rn = run.runName ?? loadRequest?.run;
+    const existing = forcesEdit ?? rooms.forces?.agents ?? [];
+    if (!rn || indices.length === 0) return;
+    const replaceNames = indices.map((i) => existing[i]?.name).filter(Boolean) as string[];
+    setForcesBusy(true);
+    setFormError(null);
+    api.forceGenerate({ run: rn, mode: "replace", existing, replaceNames, userText: visionText.trim() || undefined, model: controllers.model })
+      .then((r) => {
+        const copy = [...existing];
+        let k = 0;
+        for (const i of indices) if (r.agents[k]) copy[i] = r.agents[k++];
+        setForcesEdit(copy);
+      })
+      .catch((e) => setFormError(e instanceof Error ? e.message : String(e)))
+      .finally(() => setForcesBusy(false));
+  }, [run.runName, loadRequest?.run, forcesEdit, rooms.forces, visionText, controllers.model]);
 
   const stations: SpineStation[] = useMemo(() => {
     const fieldCount = rooms.chain.length || nodePairs.length;
@@ -198,50 +296,68 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
       : "Write a Vision or type a seed, then Generate — watch each decision between a word and a page.";
 
   const seedChip = controllers.seed || nodePairs[0]?.a || "—";
-  const stageIdx = Math.max(0, STAGE_ORDER.indexOf(current as (typeof STAGE_ORDER)[number]));
   // a finished (runName from events) or loaded (loadRequest.run) run can be re-told
   const activeRun = run.runName ?? loadRequest?.run ?? null;
-  const canRetell = !run.running && Boolean(activeRun) && Boolean(rooms.bible.work || rooms.telling.sections.length);
+  // rendering is available once a run exists AND the forces have been found (from a full run, a
+  // forces-only run, or a loaded run) — sandbox-rerun renders from the persisted chain + forces.
+  const canRetell = !run.running && Boolean(activeRun) && Boolean(rooms.bible.work || rooms.telling.sections.length || rooms.forces);
   const retell = () => {
     if (!activeRun) return;
-    void run.rerun({ run: activeRun, format: controllers.format, pov: controllers.pov, words: controllers.words });
+    // if the writer reshaped the forces, render from THAT set (sandbox-rerun uses it as-is)
+    const edited = forcesEdit && rooms.forces ? { ...rooms.forces, agents: forcesEdit } : undefined;
+    void run.rerun({ run: activeRun, format: controllers.format, pov: controllers.pov, words: controllers.words, model: controllers.model, ...(edited ? { dramatization: edited } : {}) });
   };
 
-  // pre-generate readiness: at least one complete node, or a seed to grow from
+  // pre-generate readiness: at least one complete node to grow forces from
   const definedNodes = nodePairs.filter((p) => p.a.trim() && p.b.trim()).length;
-  const hasSeed = controllers.seed.trim().length > 0;
-  const canGenerate = !run.running && (definedNodes > 0 || hasSeed);
   const readiness = run.running
     ? "generating…"
     : definedNodes > 0
-      ? `ready · ${definedNodes} node${definedNodes > 1 ? "s" : ""} · ${controllers.format} · ~${controllers.words} words`
-      : hasSeed
-        ? `ready · one word “${controllers.seed}” → grows a ${controllers.scale}-node chain`
-        : "define a node (two words) in the Field, or type a seed, then Generate";
+      ? `${definedNodes} node${definedNodes > 1 ? "s" : ""} · go to Forces to generate the forces, then Telling to write`
+      : "build the chain in the Field (two words per node), then generate the forces in step 4";
+
+  // the run controls — shared by the desktop spine (right slot) and the phone stepper (⋯ overflow)
+  const controls = mode === "replay" ? (
+    <>
+      {manifest.length > 0 && (
+        <Picker
+          label="Watch"
+          value={selectedReplay}
+          options={manifest.map((m) => ({ value: m.name, label: m.title, description: m.blurb }))}
+          onChange={setSelectedReplay}
+        />
+      )}
+      <Button variant="primary" onClick={() => void watchReplay()} disabled={!selectedReplay || run.running}>
+        {run.running ? "Watching…" : "Watch"}
+      </Button>
+    </>
+  ) : (
+    <>
+      <Picker label="model" value={controllers.model} options={MODEL_OPTIONS} onChange={(v) => patchControllers({ model: v })} />
+      {canRetell && (
+        <Button variant="primary" onClick={retell} title={rooms.bible.work ? "re-tell this run's story from the same chain (new sections)" : "write the story from the chain + forces you generated (no rebuild)"}>
+          {rooms.bible.work ? "Re-tell" : "Write the story →"}
+        </Button>
+      )}
+    </>
+  );
 
   return (
     <main className={styles.page}>
       <div className={styles.spineWrap}>
-        <Spine
-          ref={spineRef}
-          stations={stations}
-          current={current}
-          onSelect={setCurrent}
-          left={<span className={styles.seedChip}>{seedChip}</span>}
-          right={
-            <>
-              <Toggle checked={pick} onChange={setPick} label="I pick" />
-              {canRetell && (
-                <Button onClick={retell} title="re-tell this run's story from the same chain (new sections)">
-                  Re-tell
-                </Button>
-              )}
-              <Button variant="primary" onClick={generate} disabled={!canGenerate} title={canGenerate ? "run the pipeline" : "define a node or a seed first"}>
-                {run.running ? "Generating…" : "Generate"}
-              </Button>
-            </>
-          }
-        />
+        <div className={styles.barDesktop}>
+          <Spine
+            ref={spineRef}
+            stations={stations}
+            current={current}
+            onSelect={setCurrent}
+            left={<span className={styles.seedChip}>{seedChip}</span>}
+            right={controls}
+          />
+        </div>
+        <div className={styles.barPhone}>
+          <StationStepper stations={stations} current={current} onSelect={setCurrent} controls={controls} />
+        </div>
       </div>
 
       {run.running ? (
@@ -261,17 +377,6 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
       {formError && <div className={styles.error}>{formError}</div>}
 
       <div className={styles.roomFrame}>
-        <div className={styles.stageNav}>
-          <Button variant="ghost" onClick={() => setCurrent(STAGE_ORDER[stageIdx - 1])} disabled={stageIdx <= 0}>
-            ← {stageIdx > 0 ? STAGE_SHORT[STAGE_ORDER[stageIdx - 1]] : ""}
-          </Button>
-          <span className={styles.stageHere}>
-            step {stageIdx + 1} of {STAGE_ORDER.length} · <b>{STAGE_SHORT[current] ?? current}</b>
-          </span>
-          <Button variant="ghost" onClick={() => setCurrent(STAGE_ORDER[stageIdx + 1])} disabled={stageIdx >= STAGE_ORDER.length - 1}>
-            {stageIdx < STAGE_ORDER.length - 1 ? STAGE_SHORT[STAGE_ORDER[stageIdx + 1]] : ""} →
-          </Button>
-        </div>
         {run.stillHere && (
           <div className={styles.stillHere}>
             <span>Are you still here? No pick for a while — this run will freeze into a resumable draft soon.</span>
@@ -280,7 +385,7 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
             </button>
           </div>
         )}
-        {run.pendingChoice && <ChoiceCard prompt={run.pendingChoice} onAnswer={run.answer} onActivity={run.poke} />}
+        {run.pendingChoice && <ChoiceCard prompt={run.pendingChoice} onAnswer={answerChoice} onActivity={run.poke} />}
 
         {current === "vision" && (
           <VisionRoom
@@ -321,12 +426,57 @@ export function ComposePage({ loadRequest }: ComposePageProps = {}) {
             running={run.running}
           />
         )}
-        {current === "forces" && <ForcesRoom forces={rooms.forces} />}
-        {current === "telling" && (
-          <TellingRoom controllers={controllers} onChange={patchControllers} telling={rooms.telling} running={run.running} />
+        {current === "forces" && (
+          <ForcesRoom
+            forces={rooms.forces}
+            agents={effectiveForces}
+            onGenerate={generateForces}
+            onAddNew={addForce}
+            onDiscard={discardForce}
+            onRegenerate={regenerateForces}
+            running={run.running}
+            canGenerate={definedNodes > 0}
+            busy={forcesBusy}
+          />
         )}
-        {current === "bible" && <BibleRoom bible={rooms.bible} />}
+        {current === "telling" && (
+          <TellingRoom controllers={controllers} onChange={patchControllers} telling={rooms.telling} running={run.running} forceSetup={run.pendingChoice?.at === "telling"} />
+        )}
+        {current === "bible" && <BibleRoom bible={rooms.bible} forces={rooms.forces} telling={rooms.telling} />}
       </div>
+
+      <GlobalContext
+        premise={visionText.trim() || undefined}
+        registers={[]}
+        chain={rooms.chain}
+        forces={rooms.forces}
+        agents={effectiveForces}
+        format={rooms.telling.format ?? controllers.format}
+        pov={controllers.pov}
+        words={controllers.words}
+        sections={rooms.telling.sections}
+        work={rooms.bible.work}
+        cast={rooms.bible.cast}
+        model={controllers.model}
+        runName={activeRun ?? undefined}
+        events={run.events.length}
+      />
+
+      <RawTrace
+        events={run.events}
+        inputs={{
+          seed: controllers.seed || nodePairs[0]?.a || undefined,
+          partner: controllers.partner || undefined,
+          scale: controllers.scale,
+          format: controllers.format,
+          pov: controllers.pov || "explore (rotate)",
+          words: controllers.words,
+          model: controllers.model,
+          visionText: visionText || undefined,
+          spores,
+          nodePairs: chain.nodes.map((n) => ({ a: n.a, b: n.b, relation: n.relations?.[0]?.schema || undefined })),
+        }}
+      />
     </main>
   );
 }

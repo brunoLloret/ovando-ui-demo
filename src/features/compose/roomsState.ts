@@ -24,6 +24,7 @@ export interface SectionView {
   obstacle?: string;
   innerExperience?: string;
   unsaid?: string;
+  actions?: string[];
 }
 
 /** Derived per-room state — a pure fold of the event log. */
@@ -34,7 +35,7 @@ export interface RoomsState {
   chain: ChainNodeView[];
   nodeTotal: number;
   forces: Dramatization | null;
-  telling: { format?: string; rationale?: string; sections: SectionView[] };
+  telling: { format?: string; rationale?: string; actionChain?: string[]; sections: SectionView[] };
   bible: { work?: string; cast?: CastMember[] };
   frozenAt: string | null;
 }
@@ -79,8 +80,10 @@ export function foldEvent(state: RoomsState, ev: SandboxEvent): RoomsState {
       return ev.status === "done" && ev.dramatization
         ? { ...state, phase, forces: ev.dramatization }
         : { ...state, phase };
+    case "actions":
+      return { ...state, phase, telling: { ...state.telling, actionChain: Array.isArray(ev.actions) ? ev.actions : [] } };
     case "plan":
-      return { ...state, phase, telling: { format: ev.format, rationale: ev.rationale, sections: [] } };
+      return { ...state, phase, telling: { ...state.telling, format: ev.format, rationale: ev.rationale, sections: [] } };
     case "cast":
       return { ...state, phase, bible: { ...state.bible, cast: ev.cast } };
     case "section": {
@@ -99,6 +102,7 @@ export function foldEvent(state: RoomsState, ev: SandboxEvent): RoomsState {
         obstacle: str(ev.obstacle),
         innerExperience: str(ev.innerExperience),
         unsaid: str(ev.unsaid),
+        actions: Array.isArray(ev.actions) ? (ev.actions as string[]) : undefined,
       };
       const sections = state.telling.sections.some((s) => s.n === ev.n)
         ? state.telling.sections.map((s) => (s.n === ev.n ? view : s))

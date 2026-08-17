@@ -8,13 +8,15 @@ export interface ToggleProps {
   onGlyph?: string;
   offGlyph?: string;
   labelSide?: "left" | "right";
+  /** Show an indicator LED beside the switch — lit red when on, dark when off. */
+  light?: boolean;
 }
 
 /**
  * The squared slide-switch primitive (ported from toggle.js). Controlled: the caller owns state.
  * A raised rounded key rides in a recessed groove; on press it dips onto its shadow.
  */
-export function Toggle({ checked, onChange, label, onGlyph = "|", offGlyph = "o", labelSide = "left" }: ToggleProps) {
+export function Toggle({ checked, onChange, label, onGlyph = "|", offGlyph = "o", labelSide = "left", light = false }: ToggleProps) {
   const button = (
     <button
       type="button"
@@ -27,7 +29,8 @@ export function Toggle({ checked, onChange, label, onGlyph = "|", offGlyph = "o"
       <span className={styles.knob}>{checked ? onGlyph : offGlyph}</span>
     </button>
   );
-  if (!label) return <span className={styles.row}>{button}</span>;
+  const led = light ? <span aria-hidden="true" className={[styles.led, checked && styles.ledOn].filter(Boolean).join(" ")} /> : null;
+  if (!label) return <span className={styles.row}>{button}{led}</span>;
   const text = (
     <span className={styles.label} onClick={() => onChange(!checked)}>
       {label}
@@ -37,6 +40,7 @@ export function Toggle({ checked, onChange, label, onGlyph = "|", offGlyph = "o"
     <span className={styles.row}>
       {labelSide === "left" ? text : button}
       {labelSide === "left" ? button : text}
+      {led}
     </span>
   );
 }

@@ -109,7 +109,6 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
             {relBusy ? "exploring…" : rels ? "↻ explore more" : "explore →"}
           </Button>
           <Button
-            variant="ghost"
             onClick={() => {
               if (!relText.trim()) return;
               chain.setRelation(node.id, { kind: "", schema: relText.trim(), description: "", properties: [] });
@@ -122,23 +121,31 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
           </Button>
         </div>
 
-        {node.relation && (
+        {(node.relations ?? []).length > 0 && (
           <div className={styles.established}>
-            <div className={styles.establishedTag}>✓ established relation</div>
-            <span className={rooms.kindChip}>{node.relation.kind}</span>
-            <div className={rooms.schema}>{node.relation.schema}</div>
-            <div className={rooms.prose}>{node.relation.description}</div>
-            <div style={{ marginTop: 8 }}>
-              <Button variant="ghost" onClick={() => chain.setRelation(node.id, undefined)}>clear</Button>
-            </div>
+            <div className={styles.establishedTag}>✓ established relations</div>
+            {(node.relations ?? []).map((r, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                {r.kind && <span className={rooms.kindChip}>{r.kind}</span>}
+                {r.schema && <div className={rooms.schema}>{r.schema}</div>}
+                {r.description && <div className={rooms.prose}>{r.description}</div>}
+                <Button variant="ghost" onClick={() => chain.removeRelation(node.id, i)} title="remove this relation">
+                  ✕ remove
+                </Button>
+              </div>
+            ))}
+            <Button variant="ghost" onClick={() => chain.setRelation(node.id, undefined)} title="clear all relations">
+              clear all
+            </Button>
           </div>
         )}
 
-        {!node.relation && !rels && generated?.process && (
-          <div className={styles.relCard}>
+        {!rels && generated?.process && (
+          <div className={styles.relCard} tabIndex={0}>
             {generated.kind && <span className={rooms.kindChip}>{generated.kind}</span>}
             {generated.schema && <div className={rooms.schema}>{generated.schema}</div>}
-            <div className={rooms.prose}>{generated.process}</div>
+            <div className={styles.revealHint}>hover to read →</div>
+            <div className={`${rooms.prose} ${styles.reveal}`}>{generated.process}</div>
             <div style={{ marginTop: 8 }}>
               <Button onClick={() => chain.setRelation(node.id, { kind: generated.kind ?? "", schema: generated.schema ?? "", description: generated.process ?? "", properties: [] })}>
                 establish this →
@@ -148,10 +155,11 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
         )}
 
         {rels?.map((c, i) => (
-          <div key={i} className={styles.relCard}>
+          <div key={i} className={styles.relCard} tabIndex={0}>
             <span className={rooms.kindChip}>{c.kind}</span>
             <div className={rooms.schema}>{c.schema}</div>
-            <div className={rooms.prose}>{c.description}</div>
+            <div className={styles.revealHint}>hover to read →</div>
+            <div className={`${rooms.prose} ${styles.reveal}`}>{c.description}</div>
             {c.properties.length > 0 && <div className={styles.props}>{c.properties.join(" · ")}</div>}
             <div style={{ marginTop: 8 }}>
               <Button onClick={() => chain.setRelation(node.id, c)}>establish this →</Button>
@@ -159,7 +167,7 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
           </div>
         ))}
 
-        {!node.relation && !rels && !generated?.process && !relBusy && (
+        {!rels && !generated?.process && !relBusy && (node.relations ?? []).length === 0 && (
           <div className={rooms.muted}>explore candidate relations, then establish one for this node.</div>
         )}
       </div>
@@ -182,6 +190,16 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
         ))}
         {!node.subnodes?.length && !subBusy && (
           <div className={rooms.muted}>break this node into three intermediate states — stored on the node, a real level (view-only for now).</div>
+        )}
+      </div>
+
+      <div className={styles.footer}>
+        <span className={rooms.muted}>node {idx + 1} of {total} defined</span>
+        <span className={styles.spacer} />
+        {idx < total - 1 ? (
+          <Button variant="primary" onClick={() => onSelectIndex(idx + 1)}>Next node →</Button>
+        ) : (
+          <Button variant="primary" onClick={() => { chain.add(); onSelectIndex(total); }}>＋ Define another node</Button>
         )}
       </div>
     </div>

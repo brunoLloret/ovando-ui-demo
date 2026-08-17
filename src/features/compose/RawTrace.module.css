@@ -1,0 +1,53 @@
+.wrap {
+  margin: 14px 0 8px;
+  border: 1px dashed var(--slate);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+  user-select: none;
+}
+.summary:hover {
+  color: var(--ink);
+}
+.body {
+  padding: 4px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phase {
+  border-top: 1px solid rgba(26, 26, 26, 0.08);
+  padding-top: 8px;
+}
+.phaseHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.phaseLabel {
+  font-family: var(--font-struct);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.phaseDesc {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--muted);
+}
+.count {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  color: var(--slate);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 0 4px;
+}

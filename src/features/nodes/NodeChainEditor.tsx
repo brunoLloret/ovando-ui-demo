@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../../components";
 import type { NodeChain } from "./useNodeChain";
 import { NodeCard } from "./NodeCard";
@@ -23,16 +23,46 @@ export interface NodeChainEditorProps {
  */
 export function NodeChainEditor({ chain, onPropose, onInspect, spores }: NodeChainEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [count, setCount] = useState(6);
+  // "propose N" defaults to the number of nodes built so far, and tracks it until the user steps it.
+  const [count, setCount] = useState(() => chain.nodes.length || 6);
+  const [countTouched, setCountTouched] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const hasNodes = chain.nodes.length > 0;
+
+  useEffect(() => {
+    if (!countTouched) setCount(chain.nodes.length || 6);
+  }, [chain.nodes.length, countTouched]);
+
+  const stepCount = (d: -1 | 1) => {
+    setCountTouched(true);
+    setCount((c) => Math.max(1, Math.min(12, c + d)));
+  };
 
   const editing = chain.nodes.find((n) => n.id === editingId) ?? null;
 
-  const propose = async () => {
+  // "propose" asks the model for a FRESH set of node-pairs from your Vision spores and REPLACES the
+  // chain. Destructive when nodes exist (relations & sub-nodes are lost), so guard it behind a confirm.
+  const runPropose = async () => {
     if (!onPropose) return;
+    setConfirming(false);
     setBusy(true);
     try {
       chain.setAll(await onPropose(Math.max(1, Math.min(12, count || 6))));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const onProposeClick = () => {
+    if (hasNodes) setConfirming(true);
+    else void runPropose();
+  };
+  // non-destructive: append N fresh pairs to the end, keeping every existing node + its relation/sub-nodes
+  const runAppend = async () => {
+    if (!onPropose) return;
+    setBusy(true);
+    try {
+      chain.addMany(await onPropose(Math.max(1, Math.min(12, count || 6))));
     } finally {
       setBusy(false);
     }
@@ -49,17 +79,47 @@ export function NodeChainEditor({ chain, onPropose, onInspect, spores }: NodeCha
             <>
               <div className={styles.stepper}>
                 <span className={styles.stepLabel}>propose</span>
-                <button type="button" className={styles.stepBtn} onClick={() => setCount((c) => Math.max(1, c - 1))} aria-label="fewer">
+                <button type="button" className={styles.stepBtn} onClick={() => stepCount(-1)} aria-label="fewer">
                   −
                 </button>
                 <span className={styles.stepVal}>{count}</span>
-                <button type="button" className={styles.stepBtn} onClick={() => setCount((c) => Math.min(12, c + 1))} aria-label="more">
+                <button type="button" className={styles.stepBtn} onClick={() => stepCount(1)} aria-label="more">
                   +
                 </button>
               </div>
-              <Button onClick={propose} disabled={busy}>
-                {busy ? "proposing…" : "propose nodes"}
-              </Button>
+              {confirming ? (
+                <>
+                  <span className={styles.confirmMsg}>
+                    replace all {chain.nodes.length} node{chain.nodes.length === 1 ? "" : "s"} (and their relations &amp; sub-nodes)?
+                  </span>
+                  <Button variant="primary" onClick={runPropose} disabled={busy}>
+                    {busy ? "proposing…" : "replace"}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
+                    keep mine
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={onProposeClick}
+                    disabled={busy}
+                    title={hasNodes ? "ask the model for a FRESH set of node-pairs from your Vision — this REPLACES the current chain" : "ask the model for a set of node-pairs from your Vision spores"}
+                  >
+                    {busy ? "proposing…" : hasNodes ? "propose fresh set" : "propose nodes"}
+                  </Button>
+                  {hasNodes && (
+                    <Button
+                      variant="ghost"
+                      onClick={runAppend}
+                      disabled={busy}
+                      title="append fresh node-pairs from your Vision to the END of the chain — keeps everything you built"
+                    >
+                      ＋ {count} more
+                    </Button>
+                  )}
+                </>
+              )}
             </>
           )}
           <Button onClick={() => chain.add()}>+ add node</Button>

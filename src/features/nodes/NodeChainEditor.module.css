@@ -22,6 +22,12 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+.confirmMsg {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--danger, #b3261e);
+  align-self: center;
+}
 .stepper {
   display: inline-flex;
   align-items: center;

@@ -1,0 +1,60 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trust {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.hint a {
+  color: var(--accent, #6c63ff);
+  text-decoration: none;
+}
+
+.hint a:hover {
+  text-decoration: underline;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.state {
+  margin: 0;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.stateOk {
+  background: color-mix(in srgb, green 10%, transparent);
+  color: green;
+}
+
+.stateError {
+  background: color-mix(in srgb, red 10%, transparent);
+  color: var(--error, #c0392b);
+}
+
+.stateChecking {
+  opacity: 0.6;
+}
+
+.footer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}

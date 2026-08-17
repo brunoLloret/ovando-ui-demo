@@ -1,0 +1,246 @@
+/* context-carrier "eye" (Notation primitive): a rounded hexagon that rests closed (beige, ink eye
+   shut) and — on open — presses in, the lid lifts, the iris opens, and it warms to gold. Line-art
+   in currentColor, so ink→light flips for free. Hard offset shadow like Button/Toggle/Spine. */
+.hex {
+  position: fixed;
+  z-index: 50;
+  padding: 0;
+  border: none;
+  background: none;
+  line-height: 0;
+  display: inline-flex;
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.07s ease;
+}
+.hex:active {
+  cursor: grabbing;
+}
+.svg {
+  overflow: visible;
+  color: var(--ink);
+  transition: color 0.18s ease;
+}
+.hex:hover {
+  transform: translate(-1px, -1px);
+}
+.hex.isOpen {
+  transform: translate(4px, 4px); /* presses in onto its shadow */
+}
+.hex.isOpen .svg {
+  color: var(--card); /* line-art flips to light on the gold face */
+}
+.face {
+  /* the hard offset shadow lives on the FACE path only, NOT the whole svg — a filter on the svg
+     caches its subtree, so the iris (a descendant) wouldn't repaint as it tracks the cursor. */
+  filter: drop-shadow(4px 4px 0 var(--ink));
+  transition: fill 0.18s ease, filter 0.07s ease;
+}
+.hex:hover .face {
+  filter: drop-shadow(5px 5px 0 var(--ink));
+}
+.hex.isOpen .face {
+  fill: var(--ochre); /* the deliberate second use of ochre */
+  filter: none;
+}
+.hex:focus-visible {
+  outline: 2px solid var(--slate);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.eyeOpen {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleY(0.12);
+  opacity: 0;
+  transition: transform 0.26s cubic-bezier(0.4, 1.3, 0.5, 1), opacity 0.16s ease;
+}
+.eyeClosed {
+  opacity: 1;
+  transition: opacity 0.16s ease;
+}
+/* iris + pupil — eased so they glide toward the cursor when the eye is open */
+.iris {
+  transition: transform 0.12s ease;
+}
+.hex.isOpen .eyeOpen {
+  transform: scaleY(1);
+  opacity: 1;
+}
+.hex.isOpen .eyeClosed {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eyeOpen {
+    transition: opacity 0.16s ease;
+    transform: scaleY(1);
+  }
+}
+
+.panel {
+  position: fixed;
+  z-index: 49;
+  width: 372px;
+  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 5px 5px 0 0 var(--ink);
+  overflow: hidden;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--page);
+}
+.title {
+  font-family: var(--font-struct);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.runChip {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  color: var(--slate);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+.spacer {
+  flex: 1;
+}
+.close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--slate);
+}
+.close:hover {
+  color: var(--ink);
+}
+
+.body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+.nav {
+  flex: none;
+  width: 122px;
+  border-right: 1px solid rgba(26, 26, 26, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px 7px;
+  border-radius: 5px;
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--slate);
+}
+.navItem:hover {
+  background: rgba(26, 26, 26, 0.05);
+}
+.navActive {
+  background: rgba(154, 107, 42, 0.12);
+  color: var(--ink);
+}
+.status {
+  font-size: 9px;
+}
+.full {
+  color: var(--ochre);
+}
+.partial {
+  color: var(--slate);
+}
+.open {
+  color: var(--muted);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+.field {
+  margin-bottom: 12px;
+}
+.fieldLabel {
+  font-family: var(--font-struct);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.fieldBody {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.45;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.07);
+}
+.ord {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--slate);
+  margin-right: 6px;
+}
+.rel {
+  color: var(--slate);
+}
+.chip {
+  font-family: var(--font-struct);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--slate);
+  border: 1px solid var(--slate);
+  border-radius: 3px;
+  padding: 0 4px;
+  margin-left: 6px;
+}
+.sub {
+  font-size: 12px;
+  color: var(--slate);
+  margin-top: 2px;
+}
+.muted {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.work {
+  font-family: var(--font-prose);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre-wrap;
+}

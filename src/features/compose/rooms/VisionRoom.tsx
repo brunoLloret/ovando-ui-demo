@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "../../../components";
 import { api } from "../../../lib/api";
+import { useMode } from "../../../lib/mode";
 import { SporeExplorer, type NodePair } from "../../nodes";
 import type { RoomsState } from "../roomsState";
 import styles from "./rooms.module.css";
@@ -25,6 +26,7 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [explorerOpen, setExplorerOpen] = useState(false);
+  const mode = useMode();
 
   const surface = async () => {
     if (!text.trim()) return;
@@ -50,10 +52,14 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
         onChange={(e) => onTextChange(e.target.value)}
       />
       <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-        <Button variant="primary" onClick={surface} disabled={busy || !text.trim()}>
+        <Button variant="primary" onClick={surface} disabled={busy || !text.trim() || mode === "replay"}>
           {busy ? "surfacing…" : "Surface the spores"}
         </Button>
-        <span className={styles.muted}>the spores travel down the chain — into First Node, then the Field.</span>
+        <span className={styles.muted}>
+          {mode === "replay"
+            ? "switch to Live mode to surface spores from your own text"
+            : "the spores travel down the chain — into First Node, then the Field."}
+        </span>
       </div>
       {err && (
         <div className={styles.muted} style={{ color: "var(--danger)", marginTop: 8 }}>

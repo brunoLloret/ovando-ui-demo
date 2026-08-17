@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/healthz",
+      "destination": "RENDER_URL/healthz"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "RENDER_URL/api/:path*"
+    }
+  ]
+}

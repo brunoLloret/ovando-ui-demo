@@ -1,30 +1,213 @@
 .page {
-  max-width: 840px;
+  width: 100%;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 28px 24px;
+  padding: 44px 22px 40px;
+}
+.eyebrow {
+  font-family: var(--font-struct);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
 }
 .h1 {
-  font-family: var(--font-ui);
+  font-family: var(--font-prose);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+.sub {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 26px;
+}
+
+/* ── the pushable Notation card ── */
+.card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 0 var(--ink);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  transition: transform 0.07s ease, box-shadow 0.07s ease;
+}
+.card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 var(--ink);
+}
+.card:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--ink);
+}
+.card:focus-visible {
+  outline: 2px solid var(--slate);
+  outline-offset: 3px;
+}
+
+/* ── D · hero ── */
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.hero .body {
+  flex: 1;
+}
+
+.node {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--card);
+  box-shadow: 2px 2px 0 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+.node.sm {
+  width: 40px;
+  height: 40px;
+  border-width: 2px;
+}
+.g {
+  font-family: var(--font-struct);
+  font-size: 24px;
+  line-height: 1;
+}
+.sm .g {
+  font-size: 17px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  font-family: var(--font-struct);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--card);
+  margin-bottom: 9px;
+}
+.corelabel {
+  display: block;
+  font-family: var(--font-struct);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 6px;
+}
+.title {
+  display: block;
+  font-family: var(--font-prose);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.desc {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted);
   margin: 0;
 }
-.lede {
+.enter {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-struct);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 8px 13px;
+  background: var(--card);
+  box-shadow: 2px 2px 0 0 var(--ink);
+}
+.enter.gold {
+  background: var(--ochre);
+  color: var(--card);
+}
+
+/* ── A · B · C grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.mini {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 15px;
+  min-height: 176px;
+}
+.mini .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.mini .title {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.mini .foot {
+  margin-top: auto;
+  padding-top: 12px;
+}
+.cta {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+}
+
+/* ── footer: demo + saved runs ── */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.footLink {
+  border: none;
+  background: none;
+  cursor: pointer;
   font-family: var(--font-struct);
   font-size: 11.5px;
-  color: var(--muted);
-  margin: 6px 0 24px;
+  color: var(--slate);
+  padding: 0;
 }
+.footLink:hover {
+  color: var(--ink);
+}
+
 .section {
-  margin-top: 34px;
-}
-.sectionLabel {
-  font-family: var(--font-struct);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 12px;
+  margin-top: 14px;
 }
 .muted {
   font-family: var(--font-struct);
@@ -47,9 +230,7 @@
   box-shadow: var(--key-shadow) var(--key-shadow) 0 0 var(--ink);
   padding: 10px 13px;
   cursor: pointer;
-  transition:
-    transform 0.06s,
-    box-shadow 0.06s;
+  transition: transform 0.06s, box-shadow 0.06s;
 }
 .row:hover {
   transform: translate(-1px, -1px);
@@ -68,4 +249,20 @@
 .arrow {
   margin-left: auto;
   opacity: 0.4;
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 28px 14px 32px;
+  }
+  .h1 {
+    font-size: 26px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
 }

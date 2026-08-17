@@ -10,6 +10,8 @@ export interface NodeChain {
   nodes: ChainNode[];
   /** Append a node (blank by default). */
   add: (pair?: NodePair) => void;
+  /** Append several nodes at once (e.g. "propose N more"), leaving existing nodes untouched. */
+  addMany: (pairs: NodePair[]) => void;
   /** Remove a node by id. */
   remove: (id: string) => void;
   /** Patch a node's words. */
@@ -20,8 +22,10 @@ export interface NodeChain {
   reorder: (id: string, toIndex: number) => void;
   /** Swap two words (within a node or across nodes) — drag a word onto another. */
   swapWords: (idA: string, slotA: "a" | "b", idB: string, slotB: "a" | "b") => void;
-  /** Establish (or clear) the chosen relation for a node. */
+  /** Append a relation to a node's list; pass undefined to clear all. */
   setRelation: (id: string, relation: NodeRelation | undefined) => void;
+  /** Remove one relation from a node's list by index. */
+  removeRelation: (id: string, index: number) => void;
   /** Store the decomposed sub-nodes on a node (view-only). */
   setSubnodes: (id: string, subnodes: NodeSubnode[]) => void;
   /** Replace the whole chain (e.g. from a fresh proposal). */
@@ -39,6 +43,10 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
 
   const add = useCallback((pair: NodePair = { a: "", b: "" }) => {
     setNodes((prev) => [...prev, toNode(pair)]);
+  }, []);
+
+  const addMany = useCallback((pairs: NodePair[]) => {
+    setNodes((prev) => [...prev, ...pairs.map(toNode)]);
   }, []);
 
   const remove = useCallback((id: string) => {
@@ -91,7 +99,17 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
   }, []);
 
   const setRelation = useCallback((id: string, relation: NodeRelation | undefined) => {
-    setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, relation } : n)));
+    setNodes((prev) => prev.map((n) => {
+      if (n.id !== id) return n;
+      if (!relation) return { ...n, relations: [] };
+      return { ...n, relations: [...(n.relations ?? []), relation] };
+    }));
+  }, []);
+
+  const removeRelation = useCallback((id: string, index: number) => {
+    setNodes((prev) => prev.map((n) =>
+      n.id === id ? { ...n, relations: (n.relations ?? []).filter((_, i) => i !== index) } : n
+    ));
   }, []);
 
   const setSubnodes = useCallback((id: string, subnodes: NodeSubnode[]) => {
@@ -105,7 +123,7 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
   const toPairs = useCallback((): NodePair[] => nodes.map(({ a, b }) => ({ a, b })), [nodes]);
 
   return useMemo(
-    () => ({ nodes, add, remove, update, move, reorder, swapWords, setRelation, setSubnodes, setAll, toPairs }),
-    [nodes, add, remove, update, move, reorder, swapWords, setRelation, setSubnodes, setAll, toPairs],
+    () => ({ nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, toPairs }),
+    [nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, toPairs],
   );
 }

@@ -18,6 +18,8 @@ export interface RerunBody {
   dramatization?: Dramatization;
   /** re-derive the forces fresh from the chain instead of reusing them. */
   freshForces?: boolean;
+  /** which model to run on (opus/sonnet/haiku). */
+  model?: string;
 }
 
 /** POST /api/sandbox body — the run controllers. */
@@ -34,6 +36,26 @@ export interface RunControllers {
    *  A pair may carry a relation established in the node room — it overrides the generated one. */
   nodePairs?: RunNodePair[];
   apparatus?: boolean;
+  /** the writer's own story/direction (from Vision) — the SPINE that WINS over the chain in dramatize. */
+  userText?: string;
+  /** which model to run on (opus/sonnet/haiku) — applies to the whole pipeline. */
+  model?: string;
+}
+
+/** POST /api/dramatize body — the FORCES stage only: build the chain (or reuse a saved `run`) and
+ *  generate the forces, stopping before render. */
+export interface DramatizeBody {
+  /** reuse a saved run's already-built chain (no rebuild); omit to build fresh from the pairs. */
+  run?: string;
+  seed?: string;
+  partner?: string;
+  scale?: number;
+  manual?: boolean;
+  nodePairs?: RunNodePair[];
+  /** the writer's own story/direction — the spine that wins over the chain in dramatize. */
+  userText?: string;
+  /** which model to run on (opus/sonnet/haiku). */
+  model?: string;
 }
 
 /** A human joint surfaced by the run when "I pick" is on. */
@@ -46,17 +68,25 @@ export interface ChoiceOption {
 export interface ChoicePrompt {
   step: "choice";
   id: string;
-  at: "partner" | "relation" | "match" | "pair" | string;
+  at: "partner" | "relation" | "match" | "pair" | "registers" | "forces" | "telling" | string;
   title: string;
   context?: string;
   options: ChoiceOption[];
   pair?: NodePair;
+  /** multi-select joint (e.g. registers): pick several, not one */
+  multi?: boolean;
+  /** cap on how many a multi-select joint accepts (0/undefined = no cap) */
+  maxSelect?: number;
 }
 export interface ChoiceResult {
   index: number;
+  /** indices picked on a multi-select joint */
+  selected?: number[];
   text?: string;
   regenerate?: boolean;
   pair?: NodePair;
+  /** for the "telling" joint: montage/pov/length the human set before writing */
+  controls?: { format?: string; pov?: string; words?: number };
 }
 /** POST /api/sandbox-choose body. */
 export type ChoiceAnswer = { id: string } & ChoiceResult;
@@ -71,6 +101,7 @@ export type SandboxEvent =
   | ChoicePrompt
   | { step: "frozen"; runName?: string; at: string }
   | { step: "dramatize"; status: "start" | "done"; dramatization?: Dramatization }
+  | { step: "actions"; scope?: string; actions?: string[] }
   | { step: "plan"; format: string; rationale: string; units?: unknown[] }
   | { step: "cast"; cast?: CastMember[]; apparatus?: boolean }
   | { step: "section"; status: "start" | "done"; n: number; coordinate?: string; [k: string]: unknown }
@@ -157,7 +188,11 @@ export interface SavedState {
   _meta?: {
     dramatization?: Dramatization;
     cast?: CastMember[];
-    sections?: Array<{ n: number; coordinate?: string; prose?: string; scene_title?: string }>;
+    sections?: Array<{
+      n: number; coordinate?: string; prose?: string; scene_title?: string;
+      actant?: string; situation?: string; entryPoint?: string; objective?: string;
+      obstacle?: string; innerExperience?: string; unsaid?: string;
+    }>;
     work?: string;
     format?: string;
   };

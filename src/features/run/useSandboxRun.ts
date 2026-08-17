@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, streamRerun, streamSandbox } from "../../lib/api";
-import type { ChoiceAnswer, ChoicePrompt, ChoiceResult, RerunBody, RunControllers, SandboxEvent } from "../../lib/types";
+import { api, streamDramatize, streamRerun, streamSandbox } from "../../lib/api";
+import type { ChoiceAnswer, ChoicePrompt, ChoiceResult, DramatizeBody, RerunBody, RunControllers, SandboxEvent } from "../../lib/types";
 
 const IDLE_MS = 120000; // no pick for 2 min → "are you still here?"
 const GRACE_MS = 60000; // another minute of silence → freeze the run as a draft
@@ -19,6 +19,8 @@ export interface SandboxRun {
   /** The run's name (from the run events) — needed to re-render it. */
   runName: string | null;
   start: (body: RunControllers) => Promise<void>;
+  /** Generate the FORCES stage only (build/reuse chain → dramatize, no render). */
+  dramatizeStage: (body: DramatizeBody) => Promise<void>;
   /** Re-tell a saved run (render only), optionally with refined forces. */
   rerun: (body: RerunBody) => Promise<void>;
   /** Answer the pending joint (POST /api/sandbox-choose). */
@@ -128,6 +130,7 @@ export function useSandboxRun({ pick }: { pick: boolean }): SandboxRun {
   );
 
   const start = useCallback((body: RunControllers) => runStream((oe, sig) => streamSandbox(body, oe, sig)), [runStream]);
+  const dramatizeStage = useCallback((body: DramatizeBody) => runStream((oe, sig) => streamDramatize(body, oe, sig)), [runStream]);
   const rerun = useCallback((body: RerunBody) => runStream((oe, sig) => streamRerun(body, oe, sig)), [runStream]);
 
   const answer = useCallback(
@@ -170,5 +173,5 @@ export function useSandboxRun({ pick }: { pick: boolean }): SandboxRun {
     clearTimers();
   }, [clearTimers]);
 
-  return { running, events, phase, error, pendingChoice, stillHere, runName, start, rerun, answer, poke, reset };
+  return { running, events, phase, error, pendingChoice, stillHere, runName, start, dramatizeStage, rerun, answer, poke, reset };
 }

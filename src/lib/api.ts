@@ -1,8 +1,18 @@
 // Typed wrappers over the Express /api routes. The backend is unchanged; this is the single
 // place the React client talks to it. Streaming (the run) is a separate helper, `streamSandbox`.
+//
+// REPLAY MODE: when getMode() === 'replay', all network calls are intercepted here.
+// streamSandbox / streamRerun / streamDramatize route to the replay engine.
+// Everything else returns stubs. No request leaves the browser in replay mode.
+
+import { getMode, getActiveFixture } from "./mode";
+import { getKey } from "./keys";
+import { replayRun, resolveReplayChoice } from "../features/run/replay";
 
 import type {
   ChoiceAnswer,
+  DramatizeBody,
+  Force,
   ForceElaboration,
   NodePair,
   RelationCandidate,
@@ -16,8 +26,40 @@ import type {
   VisionExtract,
 } from "./types";
 
+// ── Replay stubs ──────────────────────────────────────────────────────────────
+
+function replayStub(url: string): unknown {
+  if (url.startsWith("/api/random-seed"))   return { seed: "stone" };
+  if (url.startsWith("/api/sandbox-runs"))  return [];
+  if (url.startsWith("/api/define"))        return { word: "", def: null };
+  if (url.startsWith("/api/runs"))          return [];
+  if (url.startsWith("/api/windows"))       return {};
+  if (url.startsWith("/api/trajectories"))  return { records: [] };
+  if (url.startsWith("/api/questions"))     return { records: [] };
+  if (url.startsWith("/api/calibration"))   return { records: [] };
+  if (url.startsWith("/api/vision"))        return { spores: [], experiences: [], forceDynamics: [], coreImages: [], nodePairs: [] };
+  if (url.startsWith("/api/node"))          return { candidates: [], subSeeds: [] };
+  if (url.startsWith("/api/force"))         return { want: "", fear: "", contradiction: "", note: "", agents: [] };
+  return {};
+}
+
+// ── Key header injection ──────────────────────────────────────────────────────
+
+function keyHeaders(): Record<string, string> {
+  const k = getKey();
+  if (!k) return {};
+  return { "X-Provider": k.provider, "X-Provider-Key": k.key };
+}
+
+// ── Core fetch helpers ────────────────────────────────────────────────────────
+
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
+  if (getMode() === "replay") return replayStub(url) as T;
+  const merged: RequestInit = {
+    ...init,
+    headers: { ...keyHeaders(), ...(init?.headers as Record<string, string> | undefined) },
+  };
+  const res = await fetch(url, merged);
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
     throw new Error(body?.error ?? `${res.status} ${res.statusText}`);
@@ -38,11 +80,19 @@ export const api = {
     postJson<{ subSeeds: SubSeed[] }>("/api/node/subnodes", { a, b, process }),
   forceElaborate: (f: { name: string; intention?: string; action?: string; emotion?: string; conflict?: string }) =>
     postJson<ForceElaboration>("/api/force/elaborate", f),
+  forceGenerate: (b: { run: string; mode: "new" | "replace"; existing: Force[]; replaceNames?: string[]; count?: number; userText?: string; model?: string }) =>
+    postJson<{ agents: Force[] }>("/api/force/generate", b),
   randomSeed: () => jsonFetch<{ seed: string }>("/api/random-seed"),
   sandboxRuns: () => jsonFetch<SandboxRunSummary[]>("/api/sandbox-runs"),
   sandboxState: (run: string) => jsonFetch<SavedState>(`/api/sandbox-state?run=${encodeURIComponent(run)}`),
-  chooseSandbox: (answer: ChoiceAnswer) => postJson<unknown>("/api/sandbox-choose", answer),
-  freezeSandbox: (id: string) => postJson<unknown>("/api/sandbox-freeze", { id }),
+  chooseSandbox: (answer: ChoiceAnswer): Promise<unknown> => {
+    if (getMode() === "replay") { resolveReplayChoice(); return Promise.resolve({}); }
+    return postJson<unknown>("/api/sandbox-choose", answer);
+  },
+  freezeSandbox: (id: string): Promise<unknown> => {
+    if (getMode() === "replay") return Promise.resolve({});
+    return postJson<unknown>("/api/sandbox-freeze", { id });
+  },
   define: (word: string) => jsonFetch<{ word: string; def: string | null; source?: string }>(`/api/define?w=${encodeURIComponent(word)}`),
 
   // diagnostic data tabs (read-only)
@@ -62,7 +112,7 @@ export const api = {
 async function streamPost(url: string, body: unknown, onEvent: (event: SandboxEvent) => void, signal?: AbortSignal): Promise<void> {
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...keyHeaders() },
     body: JSON.stringify(body),
     signal,
   });
@@ -97,10 +147,20 @@ async function streamPost(url: string, body: unknown, onEvent: (event: SandboxEv
   }
 }
 
-/** Run the pipeline as an SSE stream (chain → forces → telling → bible). */
-export const streamSandbox = (body: RunControllers, onEvent: (e: SandboxEvent) => void, signal?: AbortSignal) =>
-  streamPost("/api/sandbox", body, onEvent, signal);
+/** Run the pipeline as an SSE stream — or replay a fixture in replay mode. */
+export function streamSandbox(body: RunControllers, onEvent: (e: SandboxEvent) => void, signal?: AbortSignal): Promise<void> {
+  if (getMode() === "replay") return replayRun(getActiveFixture() ?? [], onEvent, signal ?? new AbortController().signal);
+  return streamPost("/api/sandbox", body, onEvent, signal);
+}
 
-/** Re-tell a saved run (render only), optionally with refined forces — an SSE stream. */
-export const streamRerun = (body: RerunBody, onEvent: (e: SandboxEvent) => void, signal?: AbortSignal) =>
-  streamPost("/api/sandbox-rerun", body, onEvent, signal);
+/** Re-tell a saved run — or replay a fixture in replay mode. */
+export function streamRerun(body: RerunBody, onEvent: (e: SandboxEvent) => void, signal?: AbortSignal): Promise<void> {
+  if (getMode() === "replay") return replayRun(getActiveFixture() ?? [], onEvent, signal ?? new AbortController().signal);
+  return streamPost("/api/sandbox-rerun", body, onEvent, signal);
+}
+
+/** Generate the FORCES stage only — or replay a fixture in replay mode. */
+export function streamDramatize(body: DramatizeBody, onEvent: (e: SandboxEvent) => void, signal?: AbortSignal): Promise<void> {
+  if (getMode() === "replay") return replayRun(getActiveFixture() ?? [], onEvent, signal ?? new AbortController().signal);
+  return streamPost("/api/dramatize", body, onEvent, signal);
+}

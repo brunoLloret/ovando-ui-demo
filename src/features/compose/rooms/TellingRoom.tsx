@@ -71,15 +71,17 @@ export interface TellingRoomProps {
   onChange: (patch: Partial<Controllers>) => void;
   telling: RoomsState["telling"];
   running: boolean;
+  /** Keep the montage/pov/length pickers open even mid-run — the telling gate is asking for them. */
+  forceSetup?: boolean;
 }
 
 /** Station 5: how the chain is told — montage · point of view · section length; sections stream in. */
-export function TellingRoom({ controllers, onChange, telling, running }: TellingRoomProps) {
+export function TellingRoom({ controllers, onChange, telling, running, forceSetup }: TellingRoomProps) {
   return (
     <div className={styles.room}>
       <div className={styles.title}>Telling — montage · grammar · sections</div>
 
-      {!running && (
+      {(!running || forceSetup) && (
         <>
           <div className={styles.setup}>
             <Picker label="montage" value={controllers.format} options={FORMATS} onChange={(v) => onChange({ format: v })} />
@@ -90,7 +92,10 @@ export function TellingRoom({ controllers, onChange, telling, running }: Telling
               min={80}
               max={600}
               value={controllers.words}
-              onChange={(e) => onChange({ words: Math.max(80, Math.min(600, Number(e.target.value) || 200)) })}
+              // clamp only on blur — clamping every keystroke forces 80 the moment you type "1",
+              // which made the field impossible to edit
+              onChange={(e) => onChange({ words: Number(e.target.value) })}
+              onBlur={(e) => onChange({ words: Math.max(80, Math.min(600, Number(e.target.value) || 200)) })}
               style={{ width: 64 }}
             />
           </div>

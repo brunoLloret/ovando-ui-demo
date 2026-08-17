@@ -13,10 +13,12 @@ export interface NodeInspectorProps {
   onSelectIndex: (i: number) => void;
   /** The generated relation for this node from a run, if any. */
   generated?: ChainNodeView;
+  /** Advance to the Field station (grow/see the whole chain). */
+  onGoToField?: () => void;
 }
 
 /** Station 2 — the node room: work one node in detail (words · relation · sub-nodes), or create one. */
-export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }: NodeInspectorProps) {
+export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, onGoToField }: NodeInspectorProps) {
   const total = chain.nodes.length;
   const idx = Math.max(0, Math.min(selectedIndex, total - 1));
   const node = chain.nodes[idx];
@@ -229,8 +231,9 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
         {idx < total - 1 ? (
           <Button variant="primary" onClick={() => onSelectIndex(idx + 1)}>Next node →</Button>
         ) : (
-          <Button variant="primary" onClick={() => { chain.add(); onSelectIndex(total); }}>＋ Define another node</Button>
+          <Button onClick={() => { chain.add(); onSelectIndex(total); }}>＋ Define another node</Button>
         )}
+        {onGoToField && <Button variant="primary" onClick={onGoToField}>Go to the field →</Button>}
       </div>
     </div>
   );

@@ -517,6 +517,7 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
             selectedIndex={selectedNodeIndex}
             onSelectIndex={setSelectedNodeIndex}
             generated={rooms.chain[selectedNodeIndex]}
+            onGoToField={() => setCurrent("field")}
           />
         )}
         {current === "field" && (

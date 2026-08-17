@@ -22,6 +22,8 @@ export interface NodeSubnode {
 /** A node in the editable chain: a pair plus a stable id, a list of established relations, and stored sub-nodes. */
 export interface ChainNode extends NodePair {
   id: string;
+  /** The writer's own words for this node — steers its word generation, relation & sub-nodes. */
+  note?: string;
   relations?: NodeRelation[];
   subnodes?: NodeSubnode[];
 }

@@ -25,7 +25,7 @@ export function draftHasContent(d: Pick<ComposeDraft, "visionText" | "spores" | 
   return Boolean(
     d.visionText.trim() ||
     d.spores.length > 0 ||
-    d.nodes.some((n) => n.a.trim() || n.b.trim() || (n.relations?.length ?? 0) > 0),
+    d.nodes.some((n) => n.a.trim() || n.b.trim() || n.note?.trim() || (n.relations?.length ?? 0) > 0),
   );
 }
 

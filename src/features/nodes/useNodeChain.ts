@@ -26,6 +26,8 @@ export interface NodeChain {
   setRelation: (id: string, relation: NodeRelation | undefined) => void;
   /** Remove one relation from a node's list by index. */
   removeRelation: (id: string, index: number) => void;
+  /** Set the node's note — the writer's own words that steer its generation. */
+  setNote: (id: string, note: string) => void;
   /** Store the decomposed sub-nodes on a node (view-only). */
   setSubnodes: (id: string, subnodes: NodeSubnode[]) => void;
   /** Replace the whole chain (e.g. from a fresh proposal). */
@@ -114,6 +116,10 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
     ));
   }, []);
 
+  const setNote = useCallback((id: string, note: string) => {
+    setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, note } : n)));
+  }, []);
+
   const setSubnodes = useCallback((id: string, subnodes: NodeSubnode[]) => {
     setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, subnodes } : n)));
   }, []);
@@ -129,7 +135,7 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
   const toPairs = useCallback((): NodePair[] => nodes.map(({ a, b }) => ({ a, b })), [nodes]);
 
   return useMemo(
-    () => ({ nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, hydrate, toPairs }),
-    [nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, hydrate, toPairs],
+    () => ({ nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setNote, setSubnodes, setAll, hydrate, toPairs }),
+    [nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setNote, setSubnodes, setAll, hydrate, toPairs],
   );
 }

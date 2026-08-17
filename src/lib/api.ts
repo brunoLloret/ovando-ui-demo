@@ -76,8 +76,10 @@ export const api = {
     postJson<{ nodePairs: NodePair[] }>("/api/vision-propose", { spores, text }),
   nodeRelation: (a: string, b: string, guidance?: string) =>
     postJson<{ candidates: RelationCandidate[] }>("/api/node/relation", { a, b, guidance }),
-  nodeSubnodes: (a: string, b: string, process?: string) =>
-    postJson<{ subSeeds: SubSeed[] }>("/api/node/subnodes", { a, b, process }),
+  nodeSubnodes: (a: string, b: string, process?: string, intent?: string) =>
+    postJson<{ subSeeds: SubSeed[] }>("/api/node/subnodes", { a, b, process, intent }),
+  nodeFromText: (text: string, a?: string, b?: string) =>
+    postJson<{ a: string; b: string }>("/api/node/from-text", { text, a, b }),
   forceElaborate: (f: { name: string; intention?: string; action?: string; emotion?: string; conflict?: string }) =>
     postJson<ForceElaboration>("/api/force/elaborate", f),
   forceGenerate: (b: { run: string; mode: "new" | "replace"; existing: Force[]; replaceNames?: string[]; count?: number; userText?: string; model?: string }) =>

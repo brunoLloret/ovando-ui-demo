@@ -22,15 +22,17 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
   const node = chain.nodes[idx];
 
   const [rels, setRels] = useState<RelationCandidate[] | null>(null);
-  const [relText, setRelText] = useState("");
   const [relBusy, setRelBusy] = useState(false);
   const [subBusy, setSubBusy] = useState(false);
+  const [genBusy, setGenBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // reset the explored relation (sub-nodes are stored on the node, so they persist)
+  // the writer's own words for this node — persistent, steers relation / sub-nodes / word generation
+  const note = node?.note ?? "";
+
+  // reset the explored relation candidates on node switch (the note & sub-nodes persist on the node)
   useEffect(() => {
     setRels(null);
-    setRelText("");
     setErr(null);
   }, [node?.id]);
 
@@ -50,7 +52,7 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
     setRelBusy(true);
     setErr(null);
     try {
-      const res = await api.nodeRelation(node.a, node.b, relText.trim() || undefined);
+      const res = await api.nodeRelation(node.a, node.b, note.trim() || undefined);
       setRels(res.candidates);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -63,12 +65,30 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
     setSubBusy(true);
     setErr(null);
     try {
-      const res = await api.nodeSubnodes(node.a, node.b, generated?.process);
+      // prefer the node's OWN established relation as the process, then a run's; the note steers it
+      const process = node.relations?.[0]?.description || node.relations?.[0]?.schema || generated?.process;
+      const res = await api.nodeSubnodes(node.a, node.b, process || undefined, note.trim() || undefined);
       chain.setSubnodes(node.id, res.subSeeds); // stored on the node — view-only for now
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setSubBusy(false);
+    }
+  };
+
+  // generate or refine the node's two words from the writer's own words about it
+  const generateWords = async () => {
+    if (!note.trim()) return;
+    setGenBusy(true);
+    setErr(null);
+    try {
+      const res = await api.nodeFromText(note.trim(), node.a || undefined, node.b || undefined);
+      if (res.a && res.b) chain.update(node.id, { a: res.a, b: res.b });
+      else setErr("no words came back — try again.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setGenBusy(false);
     }
   };
 
@@ -93,32 +113,42 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated }
 
       {err && <div className={styles.err}>{err}</div>}
 
+      {/* The writer's own words for this node — the imagination that steers everything below */}
+      <div className={styles.section}>
+        <div className={styles.sectionHead}>
+          <span className={styles.h}>In your words</span>
+          <Button onClick={generateWords} disabled={genBusy || !note.trim()} title="generate or refine the two words from what you wrote">
+            {genBusy ? "generating…" : node.a || node.b ? "↻ refine words from my text" : "✨ words from my text"}
+          </Button>
+        </div>
+        <TextInput
+          label="what this node is, in your words — steers its words, relation &amp; sub-nodes (optional)"
+          value={note}
+          onChange={(e) => chain.setNote(node.id, e.target.value)}
+          placeholder={`e.g. ${node.a || "a hardness"} giving way to ${node.b || "something spoken"}`}
+          style={{ width: "100%" }}
+        />
+      </div>
+
       <div className={styles.section}>
         <div className={styles.sectionHead}>
           <span className={styles.h}>Relation</span>
         </div>
         <div className={styles.relControls}>
-          <TextInput
-            label="describe the relation, or steer the exploration (optional)"
-            value={relText}
-            onChange={(e) => setRelText(e.target.value)}
-            placeholder={`e.g. ${node.a} hardens into the record of ${node.b}`}
-            style={{ flex: 1, minWidth: 240 }}
-          />
-          <Button onClick={exploreRelation} disabled={relBusy || !node.a || !node.b} title="ask the model for candidate relations (your text guides them)">
+          <Button onClick={exploreRelation} disabled={relBusy || !node.a || !node.b} title="ask the model for candidate relations (your words above guide them)">
             {relBusy ? "exploring…" : rels ? "↻ explore more" : "explore →"}
           </Button>
           <Button
             onClick={() => {
-              if (!relText.trim()) return;
-              chain.setRelation(node.id, { kind: "", schema: relText.trim(), description: "", properties: [] });
-              setRelText("");
+              if (!note.trim()) return;
+              chain.setRelation(node.id, { kind: "", schema: note.trim(), description: "", properties: [] });
             }}
-            disabled={!relText.trim()}
-            title="store exactly what you wrote as this node's relation"
+            disabled={!note.trim()}
+            title="store exactly what you wrote above as this node's relation"
           >
-            establish as written
+            use my words as the relation
           </Button>
+          <span className={rooms.muted}>{note.trim() ? "↑ your words steer these" : "write your words above to steer these"}</span>
         </div>
 
         {(node.relations ?? []).length > 0 && (

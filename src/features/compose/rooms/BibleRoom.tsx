@@ -9,6 +9,79 @@ export interface BibleRoomProps {
   telling: RoomsState["telling"];
 }
 
+/** Serialize the whole bible — characters, action chain, scenes & the finished work — to plain text. */
+function bibleToText(
+  bible: RoomsState["bible"],
+  forces: RoomsState["forces"],
+  telling: RoomsState["telling"],
+): string {
+  const lines: string[] = [];
+  const rule = "=".repeat(60);
+  lines.push("FIRST BIBLE", rule, "");
+
+  if (forces?.central_conflict) {
+    lines.push(`CENTRAL CONFLICT: ${forces.central_conflict}`, "");
+  }
+
+  const agents = forces?.agents ?? [];
+  if (agents.length > 0) {
+    lines.push("CHARACTERS", "-".repeat(60));
+    for (const a of agents) {
+      lines.push(a.name);
+      if (a.intention) lines.push(`  wants: ${a.intention}`);
+      if (a.action) lines.push(`  does:  ${a.action}`);
+      if (a.emotion) lines.push(`  feels: ${a.emotion}`);
+      if (a.derived_from?.length) lines.push(`  from:  ${a.derived_from.join(" · ")}`);
+      lines.push("");
+    }
+  }
+
+  const actionChain = telling?.actionChain ?? [];
+  if (actionChain.length > 0) {
+    lines.push("ACTION CHAIN", "-".repeat(60));
+    actionChain.forEach((a, i) => lines.push(`${i + 1}. ${a}`));
+    lines.push("");
+  }
+
+  const sections = telling?.sections ?? [];
+  if (sections.length > 0) {
+    lines.push("SCENES", "-".repeat(60));
+    for (const s of sections) {
+      const head = [`§${s.n}`, s.sceneTitle, s.coordinate, s.perspective].filter(Boolean).join(" · ");
+      lines.push(head);
+      const ctx: [string, string | undefined][] = [
+        ["objective", s.objective],
+        ["situation", s.situation],
+        ["obstacle", s.obstacle],
+        ["inner", s.innerExperience],
+        ["unsaid", s.unsaid],
+        ["actant", s.actant],
+      ];
+      for (const [k, v] of ctx) if (v) lines.push(`  ${k}: ${v}`);
+      if (s.actions?.length) s.actions.forEach((a, k) => lines.push(`  ${k + 1}. ${a}`));
+      lines.push("");
+    }
+  }
+
+  if (bible.work) {
+    lines.push("THE WORK", rule, "", bible.work, "");
+  }
+
+  return lines.join("\n");
+}
+
+function downloadBible(text: string) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "first-bible.txt";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 /** Station 6: the whole map — characters & their wants, a scene index with per-scene context,
  * and the finished work. */
 export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
@@ -19,7 +92,19 @@ export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
 
   return (
     <div className={styles.room}>
-      <div className={styles.title}>First Bible — the map, the record &amp; the finished work</div>
+      <div className={styles.title} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <span>First Bible — the map, the record &amp; the finished work</span>
+        {!empty && (
+          <button
+            type="button"
+            className={styles.downloadBtn}
+            onClick={() => downloadBible(bibleToText(bible, forces, telling))}
+            title="Download the whole bible as a .txt file"
+          >
+            ↓ .txt
+          </button>
+        )}
+      </div>
       {empty ? (
         <div className={styles.muted}>The whole map — characters, scenes, and the finished work — appears here when you Generate.</div>
       ) : (

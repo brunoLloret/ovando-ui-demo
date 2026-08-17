@@ -21,6 +21,25 @@
   flex-direction: column;
   gap: 6px;
 }
+.exportRow {
+  display: flex;
+  justify-content: flex-end;
+}
+.exportBtn {
+  font-family: var(--font-struct);
+  font-size: 11px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid rgba(26, 26, 26, 0.25);
+  border-radius: 4px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.exportBtn:hover {
+  background: rgba(26, 26, 26, 0.06);
+  border-color: rgba(26, 26, 26, 0.45);
+}
 .phase {
   border-top: 1px solid rgba(26, 26, 26, 0.08);
   padding-top: 8px;

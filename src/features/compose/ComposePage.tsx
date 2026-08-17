@@ -3,10 +3,10 @@ import { Button, Picker, Spine, type SpineHandle, type SpineStation } from "../.
 import { api } from "../../lib/api";
 import { useMode, setActiveFixture, type ReplayManifestEntry } from "../../lib/mode";
 import { getKey } from "../../lib/keys";
-import type { ChoiceResult, DramatizeBody, Force } from "../../lib/types";
-import { useSandboxRun } from "../run";
+import type { ChoiceResult, DramatizeBody, Force, SandboxEvent } from "../../lib/types";
+import { useSandboxRun, saveRun, listRuns, getRun, type CachedRunMeta } from "../run";
 import { useNodeChain, type NodePair } from "../nodes";
-import { useComposeRooms, type RoomsState } from "./roomsState";
+import { useComposeRooms, foldEvents, type RoomsState } from "./roomsState";
 import { hydrateFromState } from "./loadRun";
 import { narrate } from "./narrate";
 import { ChoiceCard } from "./ChoiceCard";
@@ -101,15 +101,19 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   const mode = useMode();
   const [manifest, setManifest] = useState<ReplayManifestEntry[]>([]);
   const [selectedReplay, setSelectedReplay] = useState("");
+  // saved live generations (localStorage) — survive a refresh and reload in one click
+  const [cachedRuns, setCachedRuns] = useState<CachedRunMeta[]>([]);
+  const restoredRef = useRef(false);
+  const savedForRef = useRef<string | null>(null);
 
+  // bundled examples are available in every mode (replay animates them; live loads them instantly)
   useEffect(() => {
-    if (mode !== "replay") return;
     fetch("/replays/index.json")
       .then((r) => r.json() as Promise<ReplayManifestEntry[]>)
-      .then((m) => { setManifest(m); if (m.length > 0 && !selectedReplay) setSelectedReplay(m[0].name); })
+      .then((m) => { setManifest(m); setSelectedReplay((s) => s || (m[0]?.name ?? "")); })
       .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
+    setCachedRuns(listRuns());
+  }, []);
 
   const watchReplay = useCallback(async () => {
     if (!selectedReplay) return;
@@ -125,6 +129,64 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   }, [selectedReplay, run]);
 
   const patchControllers = useCallback((patch: Partial<Controllers>) => setControllers((c) => ({ ...c, ...patch })), []);
+
+  // fold a finished event log (a cached run or a bundled example) back into the rooms — no live run
+  const applyEvents = useCallback((events: SandboxEvent[]) => {
+    run.reset();
+    const folded = foldEvents(events);
+    setLoadedRooms(folded);
+    setFormError(null);
+    const pairs = folded.chain.map((n) => ({ a: n.a, b: n.b }));
+    chain.setAll(pairs);
+    setControllers((c) => ({ ...c, seed: folded.firstNode.poleA ?? c.seed, partner: folded.firstNode.poleB ?? c.partner, scale: pairs.length || c.scale }));
+    setSpores([...new Set([...(folded.vision.keys ?? []), ...folded.chain.flatMap((n) => [n.a, n.b])])].filter(Boolean) as string[]);
+    setSelectedNodeIndex(0);
+    setCurrent(folded.bible.work ? "bible" : folded.chain.length ? "field" : "vision");
+  }, [run, chain]);
+
+  // "Load" picker: bundled example (ex:<name>) or a cached run (rc:<id>), loaded instantly
+  const loadEntry = useCallback((value: string) => {
+    if (value.startsWith("ex:")) {
+      const name = value.slice(3);
+      fetch(`/replays/${name}.json`)
+        .then((r) => r.json() as Promise<Array<{ event: SandboxEvent }>>)
+        .then((recs) => applyEvents(recs.map((rec) => rec.event)))
+        .catch((e) => setFormError(e instanceof Error ? e.message : "Failed to load example"));
+    } else if (value.startsWith("rc:")) {
+      const rec = getRun(value.slice(3));
+      if (rec) applyEvents(rec.events);
+    }
+  }, [applyEvents]);
+
+  const loadOptions = useMemo(() => {
+    const ex = manifest.map((m) => ({ value: `ex:${m.name}`, label: `★ ${m.title}`, description: m.blurb }));
+    const rc = cachedRuns.map((r) => ({ value: `rc:${r.id}`, label: `↻ ${r.title}`, description: `saved generation${r.seed ? ` · “${r.seed}”` : ""}` }));
+    return [...ex, ...rc];
+  }, [manifest, cachedRuns]);
+
+  // cache a finished live run so a refresh keeps it and it stays one click away in "Load"
+  useEffect(() => {
+    if (mode !== "live" || run.running) return;
+    const work = derivedRooms.bible.work;
+    if (!work || run.events.length === 0) return;
+    const id = run.runName ?? "local-run";
+    const sentinel = `${id}::${work.length}`;
+    if (savedForRef.current === sentinel) return; // already cached this exact result
+    savedForRef.current = sentinel;
+    const seed = derivedRooms.firstNode.poleA ?? controllers.seed ?? "run";
+    const partner = derivedRooms.firstNode.poleB;
+    saveRun({ id, title: partner ? `${seed} → ${partner}` : seed, seed, savedAt: Date.now(), events: run.events });
+    setCachedRuns(listRuns());
+  }, [mode, run.running, run.events, run.runName, derivedRooms, controllers.seed]);
+
+  // returning visitor: restore the most recent saved run so a refresh doesn't lose the work (once)
+  useEffect(() => {
+    if (restoredRef.current || mode !== "live") return;
+    if (loadRequest?.run || run.events.length > 0 || loadedRooms || cachedRuns.length === 0) return;
+    restoredRef.current = true;
+    const latest = getRun(cachedRuns[0].id);
+    if (latest) applyEvents(latest.events);
+  }, [mode, cachedRuns, loadRequest?.run, run.events.length, loadedRooms, applyEvents]);
 
   // focus follows the run
   useEffect(() => {
@@ -333,6 +395,14 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
     </>
   ) : (
     <>
+      {loadOptions.length > 0 && (
+        <Picker
+          label="load"
+          value=""
+          options={[{ value: "", label: "Load…" }, ...loadOptions]}
+          onChange={(v) => { if (v) loadEntry(v); }}
+        />
+      )}
       <Picker label="model" value={controllers.model} options={MODEL_OPTIONS} onChange={(v) => patchControllers({ model: v })} />
       {canRetell && (
         <Button variant="primary" onClick={retell} title={rooms.bible.work ? "re-tell this run's story from the same chain (new sections)" : "write the story from the chain + forces you generated (no rebuild)"}>

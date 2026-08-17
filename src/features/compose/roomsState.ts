@@ -118,7 +118,12 @@ export function foldEvent(state: RoomsState, ev: SandboxEvent): RoomsState {
   }
 }
 
+/** Fold a full event log into room state (pure — used to rehydrate cached/example runs). */
+export function foldEvents(events: SandboxEvent[]): RoomsState {
+  return events.reduce(foldEvent, INITIAL);
+}
+
 /** Derive room state from the run's event log (pure, memoized). */
 export function useComposeRooms(events: SandboxEvent[]): RoomsState {
-  return useMemo(() => events.reduce(foldEvent, INITIAL), [events]);
+  return useMemo(() => foldEvents(events), [events]);
 }

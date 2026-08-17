@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { RoomsState } from "../roomsState";
+import { downloadText, copyText } from "../../../lib/download";
 import styles from "./rooms.module.css";
 
 export interface BibleRoomProps {
@@ -70,16 +72,58 @@ function bibleToText(
   return lines.join("\n");
 }
 
-function downloadBible(text: string) {
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "first-bible.txt";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+/** Serialize the whole bible to Markdown — headings & lists, for pasting into docs/Notion. */
+function bibleToMarkdown(
+  bible: RoomsState["bible"],
+  forces: RoomsState["forces"],
+  telling: RoomsState["telling"],
+): string {
+  const out: string[] = ["# First Bible", ""];
+
+  if (forces?.central_conflict) out.push(`**Central conflict:** ${forces.central_conflict}`, "");
+
+  const agents = forces?.agents ?? [];
+  if (agents.length > 0) {
+    out.push("## Characters", "");
+    for (const a of agents) {
+      out.push(`### ${a.name}`);
+      if (a.intention) out.push(`- **wants:** ${a.intention}`);
+      if (a.action) out.push(`- **does:** ${a.action}`);
+      if (a.emotion) out.push(`- **feels:** ${a.emotion}`);
+      if (a.derived_from?.length) out.push(`- **from:** ${a.derived_from.join(" · ")}`);
+      out.push("");
+    }
+  }
+
+  const actionChain = telling?.actionChain ?? [];
+  if (actionChain.length > 0) {
+    out.push("## Action chain", "");
+    actionChain.forEach((a, i) => out.push(`${i + 1}. ${a}`));
+    out.push("");
+  }
+
+  const sections = telling?.sections ?? [];
+  if (sections.length > 0) {
+    out.push("## Scenes", "");
+    for (const s of sections) {
+      out.push(`### ${[`§${s.n}`, s.sceneTitle, s.coordinate, s.perspective].filter(Boolean).join(" · ")}`);
+      const ctx: [string, string | undefined][] = [
+        ["objective", s.objective],
+        ["situation", s.situation],
+        ["obstacle", s.obstacle],
+        ["inner", s.innerExperience],
+        ["unsaid", s.unsaid],
+        ["actant", s.actant],
+      ];
+      for (const [k, v] of ctx) if (v) out.push(`- **${k}:** ${v}`);
+      if (s.actions?.length) s.actions.forEach((a, k) => out.push(`${k + 1}. ${a}`));
+      out.push("");
+    }
+  }
+
+  if (bible.work) out.push("## The work", "", bible.work, "");
+
+  return out.join("\n");
 }
 
 /** Station 6: the whole map — characters & their wants, a scene index with per-scene context,
@@ -89,20 +133,40 @@ export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
   const sections = telling?.sections ?? [];
   const actionChain = telling?.actionChain ?? [];
   const empty = !bible.work && !bible.cast && agents.length === 0 && sections.length === 0;
+  const [copied, setCopied] = useState(false);
+
+  const copyWork = async () => {
+    if (!bible.work) return;
+    const ok = await copyText(bible.work);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
 
   return (
     <div className={styles.room}>
       <div className={styles.title} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <span>First Bible — the map, the record &amp; the finished work</span>
         {!empty && (
-          <button
-            type="button"
-            className={styles.downloadBtn}
-            onClick={() => downloadBible(bibleToText(bible, forces, telling))}
-            title="Download the whole bible as a .txt file"
-          >
-            ↓ .txt
-          </button>
+          <span style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={() => downloadText("first-bible.txt", bibleToText(bible, forces, telling))}
+              title="Download the whole bible as a .txt file"
+            >
+              ↓ .txt
+            </button>
+            <button
+              type="button"
+              className={styles.downloadBtn}
+              onClick={() => downloadText("first-bible.md", bibleToMarkdown(bible, forces, telling), "text/markdown;charset=utf-8")}
+              title="Download the whole bible as Markdown (headings & lists)"
+            >
+              ↓ .md
+            </button>
+          </span>
         )}
       </div>
       {empty ? (
@@ -199,7 +263,12 @@ export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
           {/* The finished work */}
           {bible.work && (
             <section id="bible-work" className={styles.bibleSection}>
-              <div className={styles.bibleHead}>The work</div>
+              <div className={styles.bibleHead} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span>The work</span>
+                <button type="button" className={styles.downloadBtn} onClick={copyWork} title="Copy the finished work to the clipboard">
+                  {copied ? "✓ copied" : "⧉ copy"}
+                </button>
+              </div>
               <div className={styles.work}>{bible.work}</div>
             </section>
           )}

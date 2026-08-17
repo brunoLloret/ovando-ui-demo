@@ -1,5 +1,6 @@
 import { JsonView } from "../../components";
 import type { SandboxEvent } from "../../lib/types";
+import { downloadJson } from "../../lib/download";
 import styles from "./RawTrace.module.css";
 
 export interface RawTraceProps {
@@ -52,6 +53,16 @@ export function RawTrace({ events, inputs }: RawTraceProps) {
     <details className={styles.wrap}>
       <summary className={styles.summary}>raw trace — what each phase ingested &amp; emitted ({events.length} events)</summary>
       <div className={styles.body}>
+        <div className={styles.exportRow}>
+          <button
+            type="button"
+            className={styles.exportBtn}
+            onClick={() => downloadJson("run-trace.json", { inputs, events })}
+            title="Download this run's inputs + full event stream as JSON (reload it deterministically)"
+          >
+            ↓ export run (.json)
+          </button>
+        </div>
         <div className={styles.phase}>
           <div className={styles.phaseHead}>
             <span className={styles.phaseLabel}>Inputs</span>

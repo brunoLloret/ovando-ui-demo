@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/healthz",
-      "destination": "RENDER_URL/healthz"
+      "destination": "https://ovandobeta.onrender.com/healthz"
     },
     {
       "source": "/api/:path*",
-      "destination": "RENDER_URL/api/:path*"
+      "destination": "https://ovandobeta.onrender.com/api/:path*"
     }
   ]
 }

@@ -30,6 +30,8 @@ export interface NodeChain {
   setSubnodes: (id: string, subnodes: NodeSubnode[]) => void;
   /** Replace the whole chain (e.g. from a fresh proposal). */
   setAll: (pairs: NodePair[]) => void;
+  /** Replace the whole chain with full nodes (relations & sub-nodes preserved) — e.g. restore a draft. */
+  hydrate: (nodes: ChainNode[]) => void;
   /** The chain as plain pairs, ready for the backend / `_nodePairs`. */
   toPairs: () => NodePair[];
 }
@@ -120,10 +122,14 @@ export function useNodeChain(initial: NodePair[] = []): NodeChain {
     setNodes(pairs.map(toNode));
   }, []);
 
+  const hydrate = useCallback((restored: ChainNode[]) => {
+    setNodes(restored.map((n) => ({ ...n, id: nid() })));
+  }, []);
+
   const toPairs = useCallback((): NodePair[] => nodes.map(({ a, b }) => ({ a, b })), [nodes]);
 
   return useMemo(
-    () => ({ nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, toPairs }),
-    [nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, toPairs],
+    () => ({ nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, hydrate, toPairs }),
+    [nodes, add, addMany, remove, update, move, reorder, swapWords, setRelation, removeRelation, setSubnodes, setAll, hydrate, toPairs],
   );
 }

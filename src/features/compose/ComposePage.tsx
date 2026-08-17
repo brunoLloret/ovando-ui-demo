@@ -8,6 +8,7 @@ import { useSandboxRun, saveRun, listRuns, getRun, type CachedRunMeta } from "..
 import { useNodeChain, type NodePair } from "../nodes";
 import { useComposeRooms, foldEvents, type RoomsState } from "./roomsState";
 import { hydrateFromState } from "./loadRun";
+import { loadDraft, saveDraft, clearDraft, draftHasContent } from "./draft";
 import { narrate } from "./narrate";
 import { ChoiceCard } from "./ChoiceCard";
 import { DEFAULT_CONTROLLERS, MODEL_OPTIONS, type Controllers } from "./types";
@@ -105,6 +106,9 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   const [cachedRuns, setCachedRuns] = useState<CachedRunMeta[]>([]);
   const restoredRef = useRef(false);
   const savedForRef = useRef<string | null>(null);
+  const draftRestoredRef = useRef(false);
+  const firstSaveSkip = useRef(true);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // bundled examples are available in every mode (replay animates them; live loads them instantly)
   useEffect(() => {
@@ -114,6 +118,36 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
       .catch(() => {});
     setCachedRuns(listRuns());
   }, []);
+
+  // restore the autosaved working draft (vision, chain + relations, controllers, station) on mount —
+  // a refresh never loses an ongoing project. A deep-linked run (loadRequest) takes precedence.
+  useEffect(() => {
+    if (draftRestoredRef.current) return;
+    draftRestoredRef.current = true;
+    if (loadRequest?.run) return;
+    const d = loadDraft();
+    if (!d || !draftHasContent(d)) return;
+    chain.hydrate(d.nodes);
+    setVisionText(d.visionText);
+    setSpores(d.spores);
+    setControllers(d.controllers);
+    setSelectedNodeIndex(d.selectedNodeIndex ?? 0);
+    setCurrent(d.current || "vision");
+    restoredRef.current = true; // the draft owns the working state — skip the finished-run auto-restore
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // autosave the working draft (debounced) whenever the project's inputs change
+  useEffect(() => {
+    if (firstSaveSkip.current) { firstSaveSkip.current = false; return; } // skip the initial (pre-restore) render
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(() => {
+      const draft = { savedAt: Date.now(), visionText, spores, controllers, nodes: chain.nodes, current, selectedNodeIndex };
+      if (draftHasContent(draft)) saveDraft(draft);
+      else clearDraft();
+    }, 400);
+    return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
+  }, [visionText, spores, controllers, chain.nodes, current, selectedNodeIndex]);
 
   const watchReplay = useCallback(async () => {
     if (!selectedReplay) return;
@@ -232,6 +266,7 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
     setLoadedRooms(null);
     setFormError(null);
     if (!loadRequest.run) {
+      clearDraft(); // a fresh project starts clean — drop the autosaved draft
       setControllers(DEFAULT_CONTROLLERS);
       chain.setAll([]);
       setSpores([]);

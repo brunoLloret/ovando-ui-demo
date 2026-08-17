@@ -23,6 +23,10 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
   const idx = Math.max(0, Math.min(selectedIndex, total - 1));
   const node = chain.nodes[idx];
 
+  // a node is "explored" once it has both words and an established relation; the Field opens only
+  // when every node in the chain is explored (no advancing on half-built nodes)
+  const allExplored = total > 0 && chain.nodes.every((n) => n.a.trim() && n.b.trim() && (n.relations?.length ?? 0) > 0);
+
   const [rels, setRels] = useState<RelationCandidate[] | null>(null);
   const [relBusy, setRelBusy] = useState(false);
   const [subBusy, setSubBusy] = useState(false);
@@ -233,7 +237,16 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
         ) : (
           <Button onClick={() => { chain.add(); onSelectIndex(total); }}>＋ Define another node</Button>
         )}
-        {onGoToField && <Button variant="primary" onClick={onGoToField}>Go to the field →</Button>}
+        {onGoToField && (
+          <Button
+            variant="primary"
+            onClick={onGoToField}
+            disabled={!allExplored}
+            title={allExplored ? "see & grow the whole chain in the Field" : "establish a relation on every node first"}
+          >
+            Go to the field →
+          </Button>
+        )}
       </div>
     </div>
   );

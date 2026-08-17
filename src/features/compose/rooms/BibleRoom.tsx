@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button } from "../../../components";
 import type { RoomsState } from "../roomsState";
 import { downloadText, copyText } from "../../../lib/download";
 import styles from "./rooms.module.css";
@@ -149,23 +150,19 @@ export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
       <div className={styles.title} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <span>First Bible — the map, the record &amp; the finished work</span>
         {!empty && (
-          <span style={{ display: "flex", gap: 6 }}>
-            <button
-              type="button"
-              className={styles.downloadBtn}
+          <span style={{ display: "flex", gap: 8 }}>
+            <Button
               onClick={() => downloadText("first-bible.txt", bibleToText(bible, forces, telling))}
               title="Download the whole bible as a .txt file"
             >
               ↓ .txt
-            </button>
-            <button
-              type="button"
-              className={styles.downloadBtn}
+            </Button>
+            <Button
               onClick={() => downloadText("first-bible.md", bibleToMarkdown(bible, forces, telling), "text/markdown;charset=utf-8")}
               title="Download the whole bible as Markdown (headings & lists)"
             >
               ↓ .md
-            </button>
+            </Button>
           </span>
         )}
       </div>
@@ -265,9 +262,9 @@ export function BibleRoom({ bible, forces, telling }: BibleRoomProps) {
             <section id="bible-work" className={styles.bibleSection}>
               <div className={styles.bibleHead} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <span>The work</span>
-                <button type="button" className={styles.downloadBtn} onClick={copyWork} title="Copy the finished work to the clipboard">
+                <Button onClick={copyWork} title="Copy the finished work to the clipboard">
                   {copied ? "✓ copied" : "⧉ copy"}
-                </button>
+                </Button>
               </div>
               <div className={styles.work}>{bible.work}</div>
             </section>

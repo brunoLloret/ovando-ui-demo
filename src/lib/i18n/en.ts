@@ -424,6 +424,10 @@ export const en = {
   "access.demo.needEmail": "Please enter your email.",
   "access.demo.notConfigured": "Demo requests aren't wired up yet.",
   "access.newsletter": "or subscribe to the newsletter →",
+  "access.watch.title": "See it in action",
+  "access.watch.blurb": "A quick video tour of Ovando.",
+  "access.watch.cta": "▶ Watch the demo",
+  "access.watch.close": "Close",
 };
 
 export type MessageKey = keyof typeof en;

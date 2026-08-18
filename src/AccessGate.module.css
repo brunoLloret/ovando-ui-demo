@@ -156,6 +156,52 @@
   text-decoration: underline;
 }
 
+/* Demo video lightbox — sits above the gate (z 190) and the language gate (z 200). */
+.videoOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.videoBox {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+}
+.videoAspect {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.videoAspect iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.videoClose {
+  position: absolute;
+  top: -38px;
+  right: 0;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
 @media (max-width: 560px) {
   .panels {
     flex-direction: column;
@@ -165,5 +211,8 @@
   }
   .title {
     font-size: 21px;
+  }
+  .videoOverlay {
+    padding: 16px;
   }
 }

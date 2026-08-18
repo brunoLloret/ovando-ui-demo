@@ -9,6 +9,8 @@ import styles from "./AccessGate.module.css";
 const WEB3FORMS_KEY = (import.meta.env.VITE_WEB3FORMS_KEY as string | undefined) ?? "c9a712f9-ae48-435f-a6f7-5e4454e69adb";
 // Optional newsletter link (set VITE_SUBSTACK_URL to show a "subscribe" link).
 const SUBSTACK_URL = import.meta.env.VITE_SUBSTACK_URL as string | undefined;
+// Loom demo — the /embed/ form of the share link plays inline in an iframe.
+const DEMO_EMBED = "https://www.loom.com/embed/b701da43aad94a2fb747f83c78ce0605";
 
 type DemoState = "idle" | "sending" | "sent" | { error: string };
 
@@ -26,6 +28,7 @@ export function AccessGate() {
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
   const [demo, setDemo] = useState<DemoState>("idle");
+  const [showVideo, setShowVideo] = useState(false);
 
   if (granted) return null;
 
@@ -98,6 +101,13 @@ export function AccessGate() {
             {pwError && <div className={styles.error}>{t("access.invite.wrong")}</div>}
           </section>
 
+          {/* Watch the demo */}
+          <section className={styles.panel}>
+            <div className={styles.panelTitle}>{t("access.watch.title")}</div>
+            <p className={styles.blurb}>{t("access.watch.blurb")}</p>
+            <button className={styles.secondary} onClick={() => setShowVideo(true)}>{t("access.watch.cta")}</button>
+          </section>
+
           {/* Request a demo */}
           <section className={styles.panel}>
             <div className={styles.panelTitle}>{t("access.demo.title")}</div>
@@ -135,6 +145,22 @@ export function AccessGate() {
           </section>
         </div>
       </div>
+
+      {showVideo && (
+        <div className={styles.videoOverlay} onClick={() => setShowVideo(false)}>
+          <div className={styles.videoBox} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.videoClose} onClick={() => setShowVideo(false)} aria-label={t("access.watch.close")}>✕</button>
+            <div className={styles.videoAspect}>
+              <iframe
+                src={DEMO_EMBED}
+                title={t("access.watch.title")}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

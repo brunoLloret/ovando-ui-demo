@@ -426,4 +426,8 @@ export const es: Record<MessageKey, string> = {
   "access.demo.needEmail": "Por favor ingresa tu correo.",
   "access.demo.notConfigured": "Las solicitudes de demo aún no están conectadas.",
   "access.newsletter": "o suscríbete al boletín →",
+  "access.watch.title": "Míralo en acción",
+  "access.watch.blurb": "Un breve recorrido en video por Ovando.",
+  "access.watch.cta": "▶ Ver la demo",
+  "access.watch.close": "Cerrar",
 };

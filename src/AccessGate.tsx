@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useT } from "./lib/i18n";
+import { useLocale, setLocale, type Locale } from "./lib/locale";
 import { hasAccess, grantAccess, checkPassword } from "./lib/access";
 import styles from "./AccessGate.module.css";
 
@@ -18,6 +19,7 @@ type DemoState = "idle" | "sending" | "sent" | { error: string };
  */
 export function AccessGate() {
   const t = useT();
+  const locale = useLocale();
   const [granted, setGranted] = useState(() => hasAccess());
   const [pw, setPw] = useState("");
   const [pwError, setPwError] = useState(false);
@@ -61,6 +63,20 @@ export function AccessGate() {
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={t("access.title")}>
       <div className={styles.card}>
+        <div className={styles.localeRow}>
+          {(["en", "es"] as Locale[]).map((l) => (
+            <button
+              key={l}
+              type="button"
+              className={styles.localeBtn}
+              data-active={locale === l}
+              onClick={() => setLocale(l)}
+              aria-pressed={locale === l}
+            >
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
         <div className={styles.eyebrow}>{t("access.eyebrow")}</div>
         <h1 className={styles.title}>{t("access.title")}</h1>
         <p className={styles.sub}>{t("access.sub")}</p>

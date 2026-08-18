@@ -3,10 +3,10 @@ import { useT } from "./lib/i18n";
 import { hasAccess, grantAccess, checkPassword } from "./lib/access";
 import styles from "./AccessGate.module.css";
 
-// Set these in the Vercel env (VITE_ prefixed so they reach the client build):
-//   VITE_WEB3FORMS_KEY   — free access key from web3forms.com, tied to caballoret@gmail.com
-//   VITE_SUBSTACK_URL    — optional newsletter link
-const WEB3FORMS_KEY = import.meta.env.VITE_WEB3FORMS_KEY as string | undefined;
+// Web3Forms access key (tied to caballoret@gmail.com) — these keys are designed to live in client
+// code; spam protection is server-side. Overridable via VITE_WEB3FORMS_KEY if ever rotated.
+const WEB3FORMS_KEY = (import.meta.env.VITE_WEB3FORMS_KEY as string | undefined) ?? "c9a712f9-ae48-435f-a6f7-5e4454e69adb";
+// Optional newsletter link (set VITE_SUBSTACK_URL to show a "subscribe" link).
 const SUBSTACK_URL = import.meta.env.VITE_SUBSTACK_URL as string | undefined;
 
 type DemoState = "idle" | "sending" | "sent" | { error: string };

@@ -1,0 +1,83 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--page);
+}
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--card-radius);
+  box-shadow: 6px 6px 0 0 var(--ink);
+  padding: 32px 28px;
+  text-align: center;
+}
+.brand {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  margin-bottom: 18px;
+}
+.prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-ui);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+.promptEs {
+  color: var(--slate);
+  font-weight: 500;
+}
+.buttons {
+  display: flex;
+  gap: 14px;
+}
+.lang {
+  flex: 1;
+  font-family: var(--font-struct);
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0 0 var(--ink);
+  padding: 20px 14px;
+  cursor: pointer;
+  transition: transform 0.07s, box-shadow 0.07s, background 0.14s;
+}
+.lang:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 var(--ink);
+  background: var(--page);
+}
+.lang:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 var(--ink);
+}
+.lang:focus-visible {
+  outline: 2px solid var(--slate);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .buttons {
+    flex-direction: column;
+  }
+  .card {
+    padding: 26px 20px;
+  }
+  .prompt {
+    font-size: 18px;
+  }
+}

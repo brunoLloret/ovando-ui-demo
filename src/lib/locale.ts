@@ -26,6 +26,16 @@ export function getLocale(): Locale {
   return _locale;
 }
 
+/** True once the user has explicitly picked a language (auto-detect alone doesn't count). */
+export function hasChosenLocale(): boolean {
+  try {
+    const v = localStorage.getItem(KEY);
+    return v === "en" || v === "es";
+  } catch {
+    return false;
+  }
+}
+
 export function setLocale(l: Locale): void {
   if (_locale === l) return;
   _locale = l;

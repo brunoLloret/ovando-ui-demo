@@ -6,6 +6,7 @@ import { getKey } from "./lib/keys";
 import { useLocale, setLocale, type Locale } from "./lib/locale";
 import { useT } from "./lib/i18n";
 import { LanguageGate } from "./LanguageGate";
+import { AccessGate } from "./AccessGate";
 import styles from "./AppShell.module.css";
 import { ComposePage } from "./features/compose";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
@@ -45,6 +46,7 @@ export function AppShell() {
   return (
     <div>
       <LanguageGate />
+      <AccessGate />
       <KeySettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <div className={styles.header}>
         <Tabs tabs={TABS} active={active} onSelect={setActive} />

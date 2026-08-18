@@ -404,6 +404,26 @@ export const en = {
   "choice.ofCap": " of {cap}",
   "choice.choose": "Choose “{label}” →",
   "choice.noneFit": "None fit — regenerate",
+
+  // ── Access gate (front page) ─────────────────────────────────────────────────
+  "access.eyebrow": "Field of Potential Meaning",
+  "access.title": "Ovando is in private beta",
+  "access.sub": "Enter with an invite password, or request a demo.",
+  "access.invite.title": "I have an invite",
+  "access.invite.placeholder": "invite password",
+  "access.invite.enter": "Enter →",
+  "access.invite.wrong": "That password isn't right.",
+  "access.demo.title": "Request a demo",
+  "access.demo.blurb": "Leave your email and we'll get back to you.",
+  "access.demo.email": "your email",
+  "access.demo.note": "anything you'd like to tell us (optional)",
+  "access.demo.submit": "Request a demo",
+  "access.demo.sending": "sending…",
+  "access.demo.sent": "Thanks — we'll be in touch.",
+  "access.demo.error": "Couldn't send just now — try again.",
+  "access.demo.needEmail": "Please enter your email.",
+  "access.demo.notConfigured": "Demo requests aren't wired up yet.",
+  "access.newsletter": "or subscribe to the newsletter →",
 };
 
 export type MessageKey = keyof typeof en;

@@ -1,0 +1,148 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 190; /* below the LanguageGate (200) so language is chosen first */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--page);
+  overflow-y: auto;
+}
+.card {
+  width: 100%;
+  max-width: 620px;
+  background: var(--card);
+  border: 2px solid var(--ink);
+  border-radius: var(--card-radius);
+  box-shadow: 6px 6px 0 0 var(--ink);
+  padding: 32px 28px;
+}
+.eyebrow {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--slate);
+  margin-bottom: 10px;
+}
+.title {
+  font-family: var(--font-ui);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.sub {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 22px;
+}
+.panels {
+  display: flex;
+  gap: 18px;
+}
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(26, 26, 26, 0.15);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+}
+.panelTitle {
+  font-family: var(--font-struct);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.blurb {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0;
+}
+.input,
+.textarea {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--page);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  width: 100%;
+}
+.textarea {
+  resize: vertical;
+}
+.primary,
+.secondary {
+  font-family: var(--font-struct);
+  font-size: 13px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 0 var(--ink);
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: transform 0.07s, box-shadow 0.07s, background 0.14s;
+}
+.primary {
+  background: var(--ochre);
+  color: var(--card);
+}
+.secondary {
+  background: var(--card);
+  color: var(--ink);
+}
+.primary:hover,
+.secondary:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--ink);
+}
+.primary:active,
+.secondary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 var(--ink);
+}
+.secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: 3px 3px 0 0 var(--ink);
+}
+.error {
+  font-family: var(--font-struct);
+  font-size: 11.5px;
+  color: var(--danger);
+}
+.sent {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink);
+  padding: 8px 0;
+}
+.newsletter {
+  font-family: var(--font-struct);
+  font-size: 12px;
+  color: var(--slate);
+  text-decoration: none;
+  margin-top: 2px;
+}
+.newsletter:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .panels {
+    flex-direction: column;
+  }
+  .card {
+    padding: 26px 20px;
+  }
+  .title {
+    font-size: 21px;
+  }
+}

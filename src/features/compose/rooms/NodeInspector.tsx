@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, TextInput } from "../../../components";
 import { api } from "../../../lib/api";
+import { useT } from "../../../lib/i18n";
 import type { RelationCandidate } from "../../../lib/types";
 import type { NodeChain } from "../../nodes";
 import type { ChainNodeView } from "../roomsState";
@@ -19,6 +20,7 @@ export interface NodeInspectorProps {
 
 /** Station 2 — the node room: work one node in detail (words · relation · sub-nodes), or create one. */
 export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, onGoToField }: NodeInspectorProps) {
+  const t = useT();
   const total = chain.nodes.length;
   const idx = Math.max(0, Math.min(selectedIndex, total - 1));
   const node = chain.nodes[idx];
@@ -45,10 +47,10 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
   if (total === 0 || !node) {
     return (
       <div className={rooms.room}>
-        <div className={rooms.title}>Node — create &amp; inspect one node in detail</div>
-        <div className={rooms.muted}>No nodes yet. Add one below, or build the chain in the Field.</div>
+        <div className={rooms.title}>{t("node.empty.title")}</div>
+        <div className={rooms.muted}>{t("node.empty.hint")}</div>
         <div style={{ marginTop: 12 }}>
-          <Button onClick={() => { chain.add(); onSelectIndex(chain.nodes.length); }}>＋ create a node</Button>
+          <Button onClick={() => { chain.add(); onSelectIndex(chain.nodes.length); }}>{t("node.create")}</Button>
         </div>
       </div>
     );
@@ -90,7 +92,7 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
     try {
       const res = await api.nodeFromText(note.trim(), node.a || undefined, node.b || undefined);
       if (res.a && res.b) chain.update(node.id, { a: res.a, b: res.b });
-      else setErr("no words came back — try again.");
+      else setErr(t("node.err.noWords"));
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -100,21 +102,21 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
 
   return (
     <div className={rooms.room}>
-      <div className={rooms.title}>Node — work one node in detail</div>
+      <div className={rooms.title}>{t("node.title")}</div>
 
       <div className={styles.nav}>
-        <Button variant="ghost" onClick={() => onSelectIndex(idx - 1)} disabled={idx === 0} aria-label="previous node">←</Button>
-        <span className={styles.counter}>node {idx + 1} of {total}</span>
-        <Button variant="ghost" onClick={() => onSelectIndex(idx + 1)} disabled={idx === total - 1} aria-label="next node">→</Button>
+        <Button variant="ghost" onClick={() => onSelectIndex(idx - 1)} disabled={idx === 0} aria-label={t("node.prev")}>←</Button>
+        <span className={styles.counter}>{t("node.counter", { i: idx + 1, total })}</span>
+        <Button variant="ghost" onClick={() => onSelectIndex(idx + 1)} disabled={idx === total - 1} aria-label={t("node.next")}>→</Button>
         <span className={styles.spacer} />
-        <Button onClick={() => { chain.add(); onSelectIndex(total); }}>＋ new</Button>
-        <Button variant="ghost" onClick={() => { chain.remove(node.id); onSelectIndex(Math.max(0, idx - 1)); }}>✕ remove</Button>
+        <Button onClick={() => { chain.add(); onSelectIndex(total); }}>{t("node.new")}</Button>
+        <Button variant="ghost" onClick={() => { chain.remove(node.id); onSelectIndex(Math.max(0, idx - 1)); }}>{t("node.remove")}</Button>
       </div>
 
       <div className={styles.words}>
-        <TextInput label="word A" value={node.a} onChange={(e) => chain.update(node.id, { a: e.target.value.toLowerCase() })} style={{ width: 160 }} />
-        <Button variant="ghost" onClick={() => chain.swapWords(node.id, "a", node.id, "b")} title="swap the two words">⇄</Button>
-        <TextInput label="word B" value={node.b} onChange={(e) => chain.update(node.id, { b: e.target.value.toLowerCase() })} style={{ width: 160 }} />
+        <TextInput label={t("node.wordA")} value={node.a} onChange={(e) => chain.update(node.id, { a: e.target.value.toLowerCase() })} style={{ width: 160 }} />
+        <Button variant="ghost" onClick={() => chain.swapWords(node.id, "a", node.id, "b")} title={t("node.swap")}>⇄</Button>
+        <TextInput label={t("node.wordB")} value={node.b} onChange={(e) => chain.update(node.id, { b: e.target.value.toLowerCase() })} style={{ width: 160 }} />
       </div>
 
       {err && <div className={styles.err}>{err}</div>}
@@ -122,27 +124,27 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
       {/* The writer's own words for this node — the imagination that steers everything below */}
       <div className={styles.section}>
         <div className={styles.sectionHead}>
-          <span className={styles.h}>In your words</span>
-          <Button onClick={generateWords} disabled={genBusy || !note.trim()} title="generate or refine the two words from what you wrote">
-            {genBusy ? "generating…" : node.a || node.b ? "↻ refine words from my text" : "✨ words from my text"}
+          <span className={styles.h}>{t("node.words.h")}</span>
+          <Button onClick={generateWords} disabled={genBusy || !note.trim()} title={t("node.words.genTitle")}>
+            {genBusy ? t("node.words.generating") : node.a || node.b ? t("node.words.refine") : t("node.words.generate")}
           </Button>
         </div>
         <TextInput
-          label="what this node is, in your words — steers its words, relation &amp; sub-nodes (optional)"
+          label={t("node.words.label")}
           value={note}
           onChange={(e) => chain.setNote(node.id, e.target.value)}
-          placeholder={`e.g. ${node.a || "a hardness"} giving way to ${node.b || "something spoken"}`}
+          placeholder={t("node.words.placeholder", { a: node.a || t("node.words.defaultA"), b: node.b || t("node.words.defaultB") })}
           style={{ width: "100%" }}
         />
       </div>
 
       <div className={styles.section}>
         <div className={styles.sectionHead}>
-          <span className={styles.h}>Relation</span>
+          <span className={styles.h}>{t("node.rel.h")}</span>
         </div>
         <div className={styles.relControls}>
-          <Button onClick={exploreRelation} disabled={relBusy || !node.a || !node.b} title="ask the model for candidate relations (your words above guide them)">
-            {relBusy ? "exploring…" : rels ? "↻ explore more" : "explore →"}
+          <Button onClick={exploreRelation} disabled={relBusy || !node.a || !node.b} title={t("node.rel.exploreTitle")}>
+            {relBusy ? t("node.rel.exploring") : rels ? t("node.rel.exploreMore") : t("node.rel.explore")}
           </Button>
           <Button
             onClick={() => {
@@ -150,28 +152,28 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
               chain.setRelation(node.id, { kind: "", schema: note.trim(), description: "", properties: [] });
             }}
             disabled={!note.trim()}
-            title="store exactly what you wrote above as this node's relation"
+            title={t("node.rel.useWordsTitle")}
           >
-            use my words as the relation
+            {t("node.rel.useWords")}
           </Button>
-          <span className={rooms.muted}>{note.trim() ? "↑ your words steer these" : "write your words above to steer these"}</span>
+          <span className={rooms.muted}>{note.trim() ? t("node.rel.steerYes") : t("node.rel.steerNo")}</span>
         </div>
 
         {(node.relations ?? []).length > 0 && (
           <div className={styles.established}>
-            <div className={styles.establishedTag}>✓ established relations</div>
+            <div className={styles.establishedTag}>{t("node.rel.established")}</div>
             {(node.relations ?? []).map((r, i) => (
               <div key={i} style={{ marginBottom: 8 }}>
                 {r.kind && <span className={rooms.kindChip}>{r.kind}</span>}
                 {r.schema && <div className={rooms.schema}>{r.schema}</div>}
                 {r.description && <div className={rooms.prose}>{r.description}</div>}
-                <Button variant="ghost" onClick={() => chain.removeRelation(node.id, i)} title="remove this relation">
-                  ✕ remove
+                <Button variant="ghost" onClick={() => chain.removeRelation(node.id, i)} title={t("node.rel.removeOne")}>
+                  {t("node.remove")}
                 </Button>
               </div>
             ))}
-            <Button variant="ghost" onClick={() => chain.setRelation(node.id, undefined)} title="clear all relations">
-              clear all
+            <Button variant="ghost" onClick={() => chain.setRelation(node.id, undefined)} title={t("node.rel.clearAllTitle")}>
+              {t("node.rel.clearAll")}
             </Button>
           </div>
         )}
@@ -180,11 +182,11 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
           <div className={styles.relCard} tabIndex={0}>
             {generated.kind && <span className={rooms.kindChip}>{generated.kind}</span>}
             {generated.schema && <div className={rooms.schema}>{generated.schema}</div>}
-            <div className={styles.revealHint}>hover to read →</div>
+            <div className={styles.revealHint}>{t("node.rel.hover")}</div>
             <div className={`${rooms.prose} ${styles.reveal}`}>{generated.process}</div>
             <div style={{ marginTop: 8 }}>
               <Button onClick={() => chain.setRelation(node.id, { kind: generated.kind ?? "", schema: generated.schema ?? "", description: generated.process ?? "", properties: [] })}>
-                establish this →
+                {t("node.rel.establishThis")}
               </Button>
             </div>
           </div>
@@ -194,25 +196,25 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
           <div key={i} className={styles.relCard} tabIndex={0}>
             <span className={rooms.kindChip}>{c.kind}</span>
             <div className={rooms.schema}>{c.schema}</div>
-            <div className={styles.revealHint}>hover to read →</div>
+            <div className={styles.revealHint}>{t("node.rel.hover")}</div>
             <div className={`${rooms.prose} ${styles.reveal}`}>{c.description}</div>
             {c.properties.length > 0 && <div className={styles.props}>{c.properties.join(" · ")}</div>}
             <div style={{ marginTop: 8 }}>
-              <Button onClick={() => chain.setRelation(node.id, c)}>establish this →</Button>
+              <Button onClick={() => chain.setRelation(node.id, c)}>{t("node.rel.establishThis")}</Button>
             </div>
           </div>
         ))}
 
         {!rels && !generated?.process && !relBusy && (node.relations ?? []).length === 0 && (
-          <div className={rooms.muted}>explore candidate relations, then establish one for this node.</div>
+          <div className={rooms.muted}>{t("node.rel.emptyHint")}</div>
         )}
       </div>
 
       <div className={styles.section}>
         <div className={styles.sectionHead}>
-          <span className={styles.h}>Sub-nodes</span>
+          <span className={styles.h}>{t("node.sub.h")}</span>
           <Button onClick={decompose} disabled={subBusy || !node.a || !node.b}>
-            {subBusy ? "decomposing…" : node.subnodes?.length ? "↻ decompose again" : "decompose into sub-nodes →"}
+            {subBusy ? t("node.sub.decomposing") : node.subnodes?.length ? t("node.sub.again") : t("node.sub.decompose")}
           </Button>
         </div>
         {node.subnodes?.map((s, i) => (
@@ -225,26 +227,26 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
           </div>
         ))}
         {!node.subnodes?.length && !subBusy && (
-          <div className={rooms.muted}>break this node into three intermediate states — stored on the node, a real level (view-only for now).</div>
+          <div className={rooms.muted}>{t("node.sub.emptyHint")}</div>
         )}
       </div>
 
       <div className={styles.footer}>
-        <span className={rooms.muted}>node {idx + 1} of {total} defined</span>
+        <span className={rooms.muted}>{t("node.footer.defined", { i: idx + 1, total })}</span>
         <span className={styles.spacer} />
         {idx < total - 1 ? (
-          <Button variant="primary" onClick={() => onSelectIndex(idx + 1)}>Next node →</Button>
+          <Button variant="primary" onClick={() => onSelectIndex(idx + 1)}>{t("node.footer.next")}</Button>
         ) : (
-          <Button onClick={() => { chain.add(); onSelectIndex(total); }}>＋ Define another node</Button>
+          <Button onClick={() => { chain.add(); onSelectIndex(total); }}>{t("node.footer.define")}</Button>
         )}
         {onGoToField && (
           <Button
             variant="primary"
             onClick={onGoToField}
             disabled={!allExplored}
-            title={allExplored ? "see & grow the whole chain in the Field" : "establish a relation on every node first"}
+            title={allExplored ? t("node.footer.fieldTitleReady") : t("node.footer.fieldTitleGated")}
           >
-            Go to the field →
+            {t("node.footer.field")}
           </Button>
         )}
       </div>

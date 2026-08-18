@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, TextInput } from "../../components";
+import { useT } from "../../lib/i18n";
 import type { ChoicePrompt, ChoiceResult } from "../../lib/types";
 import styles from "./ChoiceCard.module.css";
 
@@ -12,6 +13,7 @@ export interface ChoiceCardProps {
 
 /** Renders a live joint: the "pair" joint (two editable words) or an options joint (pick + direction). */
 export function ChoiceCard({ prompt, onAnswer, onActivity }: ChoiceCardProps) {
+  const t = useT();
   const act = onActivity ?? (() => {});
   const [a, setA] = useState(prompt.pair?.a ?? "");
   const [b, setB] = useState(prompt.pair?.b ?? "");
@@ -52,32 +54,32 @@ export function ChoiceCard({ prompt, onAnswer, onActivity }: ChoiceCardProps) {
       {isPair ? (
         <>
           <div className={styles.pair}>
-            <TextInput label="word A" value={a} onChange={(e) => { setA(e.target.value); act(); }} />
-            <TextInput label="word B" value={b} onChange={(e) => { setB(e.target.value); act(); }} />
+            <TextInput label={t("node.wordA")} value={a} onChange={(e) => { setA(e.target.value); act(); }} />
+            <TextInput label={t("node.wordB")} value={b} onChange={(e) => { setB(e.target.value); act(); }} />
           </div>
           <div className={styles.actions}>
             <Button onClick={() => onAnswer({ index: 0, pair: { a: a.trim().toLowerCase(), b: b.trim().toLowerCase() } })}>
-              use this pair →
+              {t("choice.usePair")}
             </Button>
             <Button
               variant="ghost"
               onClick={() => onAnswer({ index: 0, regenerate: true, pair: { a: a.trim().toLowerCase(), b: b.trim().toLowerCase() } })}
             >
-              ↻ generate a fresh pair
+              {t("choice.freshPair")}
             </Button>
           </div>
         </>
       ) : prompt.at === "telling" ? (
         <>
-          <div className={styles.context}>Set montage · point of view · length in the room below, then write.</div>
+          <div className={styles.context}>{t("choice.tellingSetup")}</div>
           <textarea
             className={styles.direction}
-            placeholder="add any final direction for the telling (optional)"
+            placeholder={t("choice.tellingDirection")}
             value={text}
             onChange={(e) => { setText(e.target.value); act(); }}
           />
           <div className={styles.actions}>
-            <Button onClick={() => onAnswer({ index: 0, text: text.trim() || undefined })}>write the story →</Button>
+            <Button onClick={() => onAnswer({ index: 0, text: text.trim() || undefined })}>{t("choice.writeStory")}</Button>
           </div>
         </>
       ) : prompt.at === "forces" ? (
@@ -92,14 +94,14 @@ export function ChoiceCard({ prompt, onAnswer, onActivity }: ChoiceCardProps) {
           </div>
           <textarea
             className={styles.direction}
-            placeholder="add a note to bind the forces (optional) — folds into the story"
+            placeholder={t("choice.forcesNote")}
             value={text}
             onChange={(e) => { setText(e.target.value); act(); }}
           />
           <div className={styles.actions}>
-            <Button onClick={() => onAnswer({ index: 0, text: text.trim() || undefined })}>approve the forces →</Button>
+            <Button onClick={() => onAnswer({ index: 0, text: text.trim() || undefined })}>{t("choice.approveForces")}</Button>
             <Button variant="ghost" onClick={() => onAnswer({ index: 0, text: text.trim() || undefined, regenerate: true })}>
-              ↻ regenerate them
+              {t("choice.regenForces")}
             </Button>
           </div>
         </>
@@ -127,13 +129,13 @@ export function ChoiceCard({ prompt, onAnswer, onActivity }: ChoiceCardProps) {
           </div>
           <textarea
             className={styles.direction}
-            placeholder="add your reading or direction (optional) — this folds into the story"
+            placeholder={t("choice.reading")}
             value={text}
             onChange={(e) => { setText(e.target.value); act(); }}
           />
           <div className={styles.actions}>
             <Button onClick={() => onAnswer({ index: 0, selected: multiSel, text: text.trim() || undefined })}>
-              {multiSel.length ? `Use ${multiSel.length}${cap ? ` of ${cap}` : ""} →` : "Use none — range freely →"}
+              {multiSel.length ? t("choice.useN", { n: multiSel.length, cap: cap ? t("choice.ofCap", { cap }) : "" }) : t("choice.useNone")}
             </Button>
           </div>
         </>
@@ -160,16 +162,16 @@ export function ChoiceCard({ prompt, onAnswer, onActivity }: ChoiceCardProps) {
           </div>
           <textarea
             className={styles.direction}
-            placeholder="add your reading or direction (optional) — this folds into the story"
+            placeholder={t("choice.reading")}
             value={text}
             onChange={(e) => { setText(e.target.value); act(); }}
           />
           <div className={styles.actions}>
             <Button onClick={() => onAnswer({ index: selected, text: text.trim() || undefined })}>
-              Choose “{prompt.options[selected]?.label ?? ""}” →
+              {t("choice.choose", { label: prompt.options[selected]?.label ?? "" })}
             </Button>
             <Button variant="ghost" onClick={() => onAnswer({ index: selected, text: text.trim() || undefined, regenerate: true })}>
-              None fit — regenerate
+              {t("choice.noneFit")}
             </Button>
           </div>
         </>

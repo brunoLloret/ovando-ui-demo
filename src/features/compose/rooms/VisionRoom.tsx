@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "../../../components";
 import { api } from "../../../lib/api";
 import { useMode } from "../../../lib/mode";
+import { useT } from "../../../lib/i18n";
 import { SporeExplorer, type NodePair } from "../../nodes";
 import type { RoomsState } from "../roomsState";
 import styles from "./rooms.module.css";
@@ -27,6 +28,7 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
   const [err, setErr] = useState<string | null>(null);
   const [explorerOpen, setExplorerOpen] = useState(false);
   const mode = useMode();
+  const t = useT();
 
   const surface = async () => {
     if (!text.trim()) return;
@@ -44,21 +46,19 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
 
   return (
     <div className={styles.room}>
-      <div className={styles.title}>Vision — write freely; surface the spores that seed the nodes</div>
+      <div className={styles.title}>{t("vision.title")}</div>
       <textarea
         className={styles.textarea}
-        placeholder="Start anywhere. What is pressing on you? What image won't leave? Don't organize it — just get it down."
+        placeholder={t("vision.placeholder")}
         value={text}
         onChange={(e) => onTextChange(e.target.value)}
       />
       <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
         <Button variant="primary" onClick={surface} disabled={busy || !text.trim() || mode === "replay"}>
-          {busy ? "surfacing…" : "Surface the spores"}
+          {busy ? t("vision.surfacing") : t("vision.surface")}
         </Button>
         <span className={styles.muted}>
-          {mode === "replay"
-            ? "switch to Live mode to surface spores from your own text"
-            : "the spores travel down the chain — into First Node, then the Field."}
+          {mode === "replay" ? t("vision.replayHint") : t("vision.travelHint")}
         </span>
       </div>
       {err && (
@@ -68,7 +68,7 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
       )}
       {spores.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <div className={styles.muted}>spores — your word-bank</div>
+          <div className={styles.muted}>{t("vision.sporesBank")}</div>
           <div className={styles.sporeBank}>
             {spores.map((w) => (
               <span key={w} className={styles.spore}>
@@ -77,15 +77,15 @@ export function VisionRoom({ vision, text, onTextChange, spores, onExtracted, no
             ))}
           </div>
           <div style={{ marginTop: 14 }}>
-            <Button onClick={() => setExplorerOpen(true)}>explore the spores → their future as nodes</Button>
+            <Button onClick={() => setExplorerOpen(true)}>{t("vision.explore")}</Button>
           </div>
         </div>
       )}
       {vision.charge && (
         <div style={{ marginTop: 16 }}>
-          <div className={styles.muted}>field-report</div>
+          <div className={styles.muted}>{t("vision.fieldReport")}</div>
           <div className={styles.prose}>{vision.charge}</div>
-          {vision.keys && vision.keys.length > 0 && <div className={styles.muted}>keys · {vision.keys.join(" · ")}</div>}
+          {vision.keys && vision.keys.length > 0 && <div className={styles.muted}>{t("vision.keys")} · {vision.keys.join(" · ")}</div>}
         </div>
       )}
 

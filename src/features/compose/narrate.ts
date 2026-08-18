@@ -1,41 +1,40 @@
 import type { SandboxEvent } from "../../lib/types";
+import type { MessageKey } from "../../lib/i18n";
 
-/** One plain-language line describing what the pipeline is doing right now (ported from explain()). */
-export function narrate(ev: SandboxEvent): string {
+type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
+/** One plain-language line describing what the pipeline is doing right now (locale-aware via t). */
+export function narrate(ev: SandboxEvent, t: T): string {
   switch (ev.step) {
     case "vision":
-      return "Reading the seed as a material state — physical conditions only, no metaphor, no story yet.";
+      return t("narrate.vision");
     case "keys":
-      return "Condensing that field-report down to a few charged words.";
+      return t("narrate.keys");
     case "field":
-      return "Pairing a key with a distant partner — the charged space between two poles is the material.";
+      return t("narrate.field");
     case "node":
-      return `Growing the chain — node ${ev.i} of ${ev.total}: a process-relation, not a plot yet.`;
+      return t("narrate.node", { i: ev.i, total: ev.total });
     case "chain":
     case "chain-built":
-      return "The relational skeleton is built. The plot is latent inside it, not yet chosen.";
+      return t("narrate.chain");
     case "choice":
-      return "Your turn — pick among the candidates, and add any direction. Your words fold into the story.";
+      return t("narrate.choice");
     case "dramatize":
-      return ev.status === "start"
-        ? "Finding the human situation that has the SAME shape as this abstract chain…"
-        : "The forces and the central conflict have emerged from the chain.";
+      return ev.status === "start" ? t("narrate.dramatize.start") : t("narrate.dramatize.done");
     case "plan":
-      return "Arranging the telling — the montage decides what the reader meets, and in what order.";
+      return t("narrate.plan");
     case "cast":
-      return "Casting the stable characters that will carry the abstract forces.";
+      return t("narrate.cast");
     case "section":
-      return ev.status === "start"
-        ? `Writing §${ev.n}: incarnate the beat, inhabit the voice, hold its grammatical position.`
-        : `§${ev.n} written — moving on.`;
+      return ev.status === "start" ? t("narrate.section.start", { n: ev.n }) : t("narrate.section.done", { n: ev.n });
     case "edition":
-      return "Auditing the whole draft: contradictions, dropped threads, over-repetition.";
+      return t("narrate.edition");
     case "run":
-      return "The work is finished — cast, record, and the full text.";
+      return t("narrate.run");
     case "frozen":
-      return `Frozen as a draft at the ${ev.at} stage. You can resume from where you left off.`;
+      return t("narrate.frozen", { at: ev.at });
     case "error":
-      return `Error: ${ev.message}`;
+      return t("narrate.error", { message: ev.message });
     default:
       return "";
   }

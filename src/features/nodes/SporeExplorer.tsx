@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Modal } from "../../components";
 import { api } from "../../lib/api";
+import { useT } from "../../lib/i18n";
 import { NodeChainEditor } from "./NodeChainEditor";
 import { useNodeChain } from "./useNodeChain";
 import type { NodePair } from "./types";
@@ -20,6 +21,7 @@ export interface SporeExplorerProps {
  * (or none), propose polarity-pairs, then drag to reorder nodes / swap words. Closing keeps your work.
  */
 export function SporeExplorer({ open, spores, visionText, initialPairs, onClose }: SporeExplorerProps) {
+  const t = useT();
   const chain = useNodeChain(initialPairs);
   const [firstWord, setFirstWord] = useState<string | null>(null);
 
@@ -35,15 +37,15 @@ export function SporeExplorer({ open, spores, visionText, initialPairs, onClose 
     <Modal
       open={open}
       size="wide"
-      title="Explore the spores — their future as nodes"
+      title={t("spore.title")}
       onClose={commit}
-      footer={<Button variant="primary" onClick={commit}>Done →</Button>}
+      footer={<Button variant="primary" onClick={commit}>{t("spore.done")}</Button>}
     >
       <div className={styles.sporesLabel}>
-        spores — <b>click</b> one to make it the first word (or none) · <b>drag</b> one into a node's word slot
+        {t("spore.instr")}
       </div>
       <div className={styles.bank}>
-        {spores.length === 0 && <span className={styles.muted}>no spores yet — surface some in the Vision first</span>}
+        {spores.length === 0 && <span className={styles.muted}>{t("spore.none")}</span>}
         {spores.map((w) => (
           <span
             key={w}
@@ -59,7 +61,7 @@ export function SporeExplorer({ open, spores, visionText, initialPairs, onClose 
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") setFirstWord((prev) => (prev === w ? null : w));
             }}
-            title={firstWord === w ? "the first word — click to unset · drag into a slot" : "click = first word · drag into a node slot"}
+            title={firstWord === w ? t("spore.firstWordTitle") : t("spore.pickTitle")}
           >
             {w}
           </span>
@@ -67,7 +69,7 @@ export function SporeExplorer({ open, spores, visionText, initialPairs, onClose 
       </div>
       {firstWord && (
         <div className={styles.firstWordNote}>
-          first word · <b>{firstWord}</b>
+          {t("spore.firstWord", { word: firstWord })}
         </div>
       )}
 
@@ -75,7 +77,7 @@ export function SporeExplorer({ open, spores, visionText, initialPairs, onClose 
 
       <NodeChainEditor chain={chain} onPropose={spores.length ? propose : undefined} spores={spores} />
 
-      <div className={styles.hint}>drag the grip to reorder nodes · drag a word onto another to swap · ✎ to edit · ✕ to remove</div>
+      <div className={styles.hint}>{t("spore.hint")}</div>
     </Modal>
   );
 }

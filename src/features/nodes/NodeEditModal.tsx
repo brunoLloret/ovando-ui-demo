@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button, Modal, TextInput } from "../../components";
+import { useT } from "../../lib/i18n";
 import type { ChainNode, NodePair } from "./types";
 import styles from "./NodeEditModal.module.css";
 
@@ -14,6 +15,7 @@ export interface NodeEditModalProps {
 
 /** Pop-up to edit a node's two words. Local draft; commits only on Save. */
 export function NodeEditModal({ node, onSave, onClose, spores }: NodeEditModalProps) {
+  const t = useT();
   const [a, setA] = useState("");
   const [b, setB] = useState("");
 
@@ -39,26 +41,26 @@ export function NodeEditModal({ node, onSave, onClose, spores }: NodeEditModalPr
   return (
     <Modal
       open={node !== null}
-      title="Edit node — two words, one relation"
+      title={t("editnode.title")}
       onClose={onClose}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t("editnode.cancel")}
           </Button>
           <Button variant="primary" onClick={save}>
-            Save
+            {t("editnode.save")}
           </Button>
         </>
       }
     >
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-        <TextInput label="word A" value={a} onChange={(e) => setA(e.target.value)} autoFocus />
-        <TextInput label="word B" value={b} onChange={(e) => setB(e.target.value)} />
+        <TextInput label={t("node.wordA")} value={a} onChange={(e) => setA(e.target.value)} autoFocus />
+        <TextInput label={t("node.wordB")} value={b} onChange={(e) => setB(e.target.value)} />
       </div>
       {spores && spores.length > 0 && (
         <div style={{ marginTop: 14 }}>
-          <div className="struct" style={{ color: "var(--muted)", marginBottom: 6 }}>spores — click to fill a word</div>
+          <div className="struct" style={{ color: "var(--muted)", marginBottom: 6 }}>{t("editnode.sporesFill")}</div>
           <div className={styles.bank}>
             {spores.map((w) => (
               <button key={w} type="button" className={styles.spore} onClick={() => useSpore(w)}>
@@ -69,7 +71,7 @@ export function NodeEditModal({ node, onSave, onClose, spores }: NodeEditModalPr
         </div>
       )}
       <div className="struct" style={{ marginTop: 12, color: "var(--muted)" }}>
-        The relation between these two words is explored when the chain generates.
+        {t("editnode.relNote")}
       </div>
     </Modal>
   );

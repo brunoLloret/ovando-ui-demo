@@ -9,6 +9,7 @@ import { useNodeChain, type NodePair } from "../nodes";
 import { useComposeRooms, foldEvents, type RoomsState } from "./roomsState";
 import { hydrateFromState } from "./loadRun";
 import { loadDraft, saveDraft, clearDraft, draftHasContent } from "./draft";
+import { useT, type MessageKey } from "../../lib/i18n";
 import { narrate } from "./narrate";
 import { ChoiceCard } from "./ChoiceCard";
 import { DEFAULT_CONTROLLERS, MODEL_OPTIONS, type Controllers } from "./types";
@@ -24,14 +25,6 @@ import { StationStepper } from "./StationStepper";
 import styles from "./ComposePage.module.css";
 
 const STAGE_ORDER = ["vision", "node", "field", "forces", "telling", "bible"] as const;
-const STAGE_LABEL: Record<string, string> = {
-  vision: "Vision — the seed becomes a material field",
-  node: "First node — two words, one relation",
-  field: "Field — growing the chain of nodes",
-  forces: "Forces — the human story emerges",
-  telling: "Telling — arranging & writing the sections",
-  bible: "Bible — cast, record & the finished work",
-};
 
 /** step → spine station id (the labels shifted historically; this is the single mapping). */
 function stationForStep(step: string): string {
@@ -72,6 +65,7 @@ export interface ComposePageProps {
 }
 
 export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
+  const t = useT();
   const [controllers, setControllers] = useState<Controllers>(DEFAULT_CONTROLLERS);
   // Joints/pauses are disabled for now — generation runs step by step through the room buttons
   // (Field → Forces "generate the forces" → Telling "write the story"), so runs never pause.
@@ -193,10 +187,10 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   }, [applyEvents]);
 
   const loadOptions = useMemo(() => {
-    const ex = manifest.map((m) => ({ value: `ex:${m.name}`, label: `★ ${m.title}`, description: m.blurb }));
-    const rc = cachedRuns.map((r) => ({ value: `rc:${r.id}`, label: `↻ ${r.title}`, description: `saved generation${r.seed ? ` · “${r.seed}”` : ""}` }));
+    const ex = manifest.map((m) => ({ value: `ex:${m.name}`, label: t("compose.example", { title: m.title }), description: m.blurb }));
+    const rc = cachedRuns.map((r) => ({ value: `rc:${r.id}`, label: t("compose.recent", { title: r.title }), description: `${t("compose.savedGen")}${r.seed ? ` · “${r.seed}”` : ""}` }));
     return [...ex, ...rc];
-  }, [manifest, cachedRuns]);
+  }, [manifest, cachedRuns, t]);
 
   // cache a finished live run so a refresh keeps it and it stays one click away in "Load"
   useEffect(() => {
@@ -376,21 +370,21 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   const stations: SpineStation[] = useMemo(() => {
     const fieldCount = rooms.chain.length || nodePairs.length;
     return [
-      { id: "vision", index: 1, label: "vision", glyph: "◦" },
-      { id: "node", index: 2, label: "node", glyph: "o–o" },
-      { id: "field", index: 3, label: "field", glyph: "∴", count: fieldCount },
-      { id: "forces", index: 4, label: "forces", glyph: ">|<" },
-      { id: "telling", index: 5, label: "telling", glyph: "¶" },
-      { id: "bible", index: 6, label: "bible", glyph: "§" },
+      { id: "vision", index: 1, label: t("compose.station.vision"), glyph: "◦" },
+      { id: "node", index: 2, label: t("compose.station.node"), glyph: "o–o" },
+      { id: "field", index: 3, label: t("compose.station.field"), glyph: "∴", count: fieldCount },
+      { id: "forces", index: 4, label: t("compose.station.forces"), glyph: ">|<" },
+      { id: "telling", index: 5, label: t("compose.station.telling"), glyph: "¶" },
+      { id: "bible", index: 6, label: t("compose.station.bible"), glyph: "§" },
     ];
-  }, [rooms.chain.length, nodePairs.length]);
+  }, [rooms.chain.length, nodePairs.length, t]);
 
   const last = run.events[run.events.length - 1];
   const narration = run.error
-    ? `Error: ${run.error}`
+    ? t("narrate.error", { message: run.error })
     : last
-      ? narrate(last)
-      : "Write a Vision or type a seed, then Generate — watch each decision between a word and a page.";
+      ? narrate(last, t)
+      : t("compose.narrationFallback");
 
   const seedChip = controllers.seed || nodePairs[0]?.a || "—";
   // a finished (runName from events) or loaded (loadRequest.run) run can be re-told
@@ -408,40 +402,40 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
   // pre-generate readiness: at least one complete node to grow forces from
   const definedNodes = nodePairs.filter((p) => p.a.trim() && p.b.trim()).length;
   const readiness = run.running
-    ? "generating…"
+    ? t("compose.generating")
     : definedNodes > 0
-      ? `${definedNodes} node${definedNodes > 1 ? "s" : ""} · go to Forces to generate the forces, then Telling to write`
-      : "build the chain in the Field (two words per node), then generate the forces in step 4";
+      ? t("compose.readiness.ready", { count: `${definedNodes} ${definedNodes > 1 ? t("compose.nodes") : t("compose.node")}` })
+      : t("compose.readiness.empty");
 
   // the run controls — shared by the desktop spine (right slot) and the phone stepper (⋯ overflow)
   const controls = mode === "replay" ? (
     <>
       {manifest.length > 0 && (
         <Picker
-          label="Watch"
+          label={t("compose.watch")}
           value={selectedReplay}
           options={manifest.map((m) => ({ value: m.name, label: m.title, description: m.blurb }))}
           onChange={setSelectedReplay}
         />
       )}
       <Button variant="primary" onClick={() => void watchReplay()} disabled={!selectedReplay || run.running}>
-        {run.running ? "Watching…" : "Watch"}
+        {run.running ? t("compose.watching") : t("compose.watch")}
       </Button>
     </>
   ) : (
     <>
       {loadOptions.length > 0 && (
         <Picker
-          label="load"
+          label={t("compose.load")}
           value=""
-          options={[{ value: "", label: "Load…" }, ...loadOptions]}
+          options={[{ value: "", label: t("compose.loadPlaceholder") }, ...loadOptions]}
           onChange={(v) => { if (v) loadEntry(v); }}
         />
       )}
-      <Picker label="model" value={controllers.model} options={MODEL_OPTIONS} onChange={(v) => patchControllers({ model: v })} />
+      <Picker label={t("compose.model")} value={controllers.model} options={MODEL_OPTIONS} onChange={(v) => patchControllers({ model: v })} />
       {canRetell && (
-        <Button variant="primary" onClick={retell} title={rooms.bible.work ? "re-tell this run's story from the same chain (new sections)" : "write the story from the chain + forces you generated (no rebuild)"}>
-          {rooms.bible.work ? "Re-tell" : "Write the story →"}
+        <Button variant="primary" onClick={retell} title={rooms.bible.work ? t("compose.retellTitle") : t("compose.writeTitle")}>
+          {rooms.bible.work ? t("compose.retell") : t("compose.writeStory")}
         </Button>
       )}
     </>
@@ -468,9 +462,9 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
       {run.running ? (
         <div className={styles.process}>
           <span className={styles.processStep}>
-            step {Math.max(0, STAGE_ORDER.indexOf(current as (typeof STAGE_ORDER)[number])) + 1} of {STAGE_ORDER.length}
+            {t("compose.step", { n: Math.max(0, STAGE_ORDER.indexOf(current as (typeof STAGE_ORDER)[number])) + 1, total: STAGE_ORDER.length })}
           </span>
-          <b className={styles.processStage}>{STAGE_LABEL[current] ?? current}</b>
+          <b className={styles.processStage}>{t(`compose.stage.${current}` as MessageKey)}</b>
           <span className={styles.processNarr}>{narration}</span>
         </div>
       ) : (
@@ -484,9 +478,9 @@ export function ComposePage({ loadRequest, onNeedKey }: ComposePageProps = {}) {
       <div className={styles.roomFrame}>
         {run.stillHere && (
           <div className={styles.stillHere}>
-            <span>Are you still here? No pick for a while — this run will freeze into a resumable draft soon.</span>
+            <span>{t("compose.stillHere")}</span>
             <button className={styles.stillHereBtn} onClick={run.poke}>
-              I&rsquo;m here
+              {t("compose.imHere")}
             </button>
           </div>
         )}

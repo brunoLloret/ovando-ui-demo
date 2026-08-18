@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { SpineStation } from "../../components";
+import { useT } from "../../lib/i18n";
 import styles from "./StationStepper.module.css";
 
 export interface StationStepperProps {
@@ -13,6 +14,7 @@ export interface StationStepperProps {
 /** The phone top-bar nav: a compact station stepper (‹ Forces · 4/6 ›) with a tap-to-open station
  * menu and a ⋯ overflow for the controls. The bar never changes size — the menus float over it. */
 export function StationStepper({ stations, current, onSelect, controls }: StationStepperProps) {
+  const t = useT();
   const [menu, setMenu] = useState<null | "stations" | "more">(null);
   const idx = Math.max(0, stations.findIndex((s) => s.id === current));
   const cur = stations[idx];
@@ -21,15 +23,15 @@ export function StationStepper({ stations, current, onSelect, controls }: Statio
 
   return (
     <div className={styles.bar}>
-      <button className={styles.arrow} onClick={() => go(idx - 1)} disabled={idx <= 0} aria-label="previous station">‹</button>
+      <button className={styles.arrow} onClick={() => go(idx - 1)} disabled={idx <= 0} aria-label={t("stepper.prev")}>‹</button>
       <button className={styles.label} onClick={() => toggle("stations")} aria-haspopup="true" aria-expanded={menu === "stations"}>
         <b>{cur?.label ?? "—"}</b>
         <span className={styles.count}>{idx + 1}/{stations.length}</span>
       </button>
-      <button className={styles.arrow} onClick={() => go(idx + 1)} disabled={idx >= stations.length - 1} aria-label="next station">›</button>
+      <button className={styles.arrow} onClick={() => go(idx + 1)} disabled={idx >= stations.length - 1} aria-label={t("stepper.next")}>›</button>
       <span className={styles.spacer} />
       {controls && (
-        <button className={styles.more} onClick={() => toggle("more")} aria-label="controls" aria-expanded={menu === "more"}>⋯</button>
+        <button className={styles.more} onClick={() => toggle("more")} aria-label={t("stepper.controls")} aria-expanded={menu === "more"}>⋯</button>
       )}
 
       {menu === "stations" && (

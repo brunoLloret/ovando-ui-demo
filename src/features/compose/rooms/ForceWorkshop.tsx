@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Modal } from "../../../components";
 import { api } from "../../../lib/api";
+import { useT } from "../../../lib/i18n";
 import type { Force, ForceElaboration } from "../../../lib/types";
 import styles from "./ForceWorkshop.module.css";
 
@@ -14,6 +15,7 @@ export interface ForceWorkshopProps {
 
 /** Pop-up to understand & deepen one force before the story writes — its drives, then an elaboration. */
 export function ForceWorkshop({ force, conflict, onClose }: ForceWorkshopProps) {
+  const t = useT();
   const [elab, setElab] = useState<ForceElaboration | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -40,32 +42,32 @@ export function ForceWorkshop({ force, conflict, onClose }: ForceWorkshopProps) 
     <Modal
       open={force !== null}
       size="wide"
-      title={`Force — ${force?.name ?? ""}`}
+      title={t("workshop.title", { name: force?.name ?? "" })}
       onClose={onClose}
-      footer={<Button variant="primary" onClick={onClose}>Done</Button>}
+      footer={<Button variant="primary" onClick={onClose}>{t("workshop.done")}</Button>}
     >
       {force && (
         <>
           <div className={styles.grid}>
-            {force.intention && <Row label="wants" value={force.intention} />}
-            {force.action && <Row label="does" value={force.action} />}
-            {force.emotion && <Row label="feels" value={force.emotion} />}
-            {force.derived_from && force.derived_from.length > 0 && <Row label="from" value={force.derived_from.join(" · ")} />}
+            {force.intention && <Row label={t("workshop.wants")} value={force.intention} />}
+            {force.action && <Row label={t("workshop.does")} value={force.action} />}
+            {force.emotion && <Row label={t("workshop.feels")} value={force.emotion} />}
+            {force.derived_from && force.derived_from.length > 0 && <Row label={t("workshop.from")} value={force.derived_from.join(" · ")} />}
           </div>
 
           <div className={styles.actions}>
             <Button onClick={elaborate} disabled={busy}>
-              {busy ? "deepening…" : elab ? "↻ elaborate again" : "elaborate this force →"}
+              {busy ? t("workshop.deepening") : elab ? t("workshop.again") : t("workshop.elaborate")}
             </Button>
-            <span className={styles.hint}>understand it deeper before the story writes it</span>
+            <span className={styles.hint}>{t("workshop.hint")}</span>
           </div>
           {err && <div className={styles.err}>{err}</div>}
 
           {elab && (
             <div className={styles.elab}>
-              {elab.want && <Row label="deep want" value={elab.want} />}
-              {elab.fear && <Row label="fear" value={elab.fear} />}
-              {elab.contradiction && <Row label="contradiction" value={elab.contradiction} />}
+              {elab.want && <Row label={t("workshop.deepWant")} value={elab.want} />}
+              {elab.fear && <Row label={t("workshop.fear")} value={elab.fear} />}
+              {elab.contradiction && <Row label={t("workshop.contradiction")} value={elab.contradiction} />}
               {elab.note && <div className={styles.note}>{elab.note}</div>}
             </div>
           )}

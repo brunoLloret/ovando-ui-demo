@@ -1,7 +1,10 @@
 import { useState, type DragEvent } from "react";
 import type { ChainNode } from "./types";
 import { Button } from "../../components";
+import { useT, type MessageKey } from "../../lib/i18n";
 import styles from "./NodeCard.module.css";
+
+type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 export interface NodeCardProps {
   node: ChainNode;
@@ -35,7 +38,7 @@ interface WordChipProps {
 }
 
 /** A draggable word chip. Module-level (NOT nested in NodeCard) so it isn't remounted mid-drag. */
-function WordChip({ nodeId, slot, value, onSwap, onSetWord, onPick }: WordChipProps) {
+function WordChip({ nodeId, slot, value, onSwap, onSetWord, onPick, t }: WordChipProps & { t: T }) {
   return (
     <span
       className={[styles.word, !value && styles.wordEmpty].filter(Boolean).join(" ")}
@@ -67,15 +70,16 @@ function WordChip({ nodeId, slot, value, onSwap, onSetWord, onPick }: WordChipPr
         const src = JSON.parse(raw) as { id: string; slot: "a" | "b" };
         onSwap(src.id, src.slot, nodeId, slot);
       }}
-      title="click to open · drag a spore here · drag onto another word to swap"
+      title={t("nodecard.wordTitle")}
     >
-      {value || "＋ add"}
+      {value || t("nodecard.add")}
     </span>
   );
 }
 
 /** One node in the chain: drag the grip to reorder, drag a word onto another to swap; also edit/remove. */
 export function NodeCard({ node, index, total, onEdit, onRemove, onMove, onReorder, onSwap, onSetWord, onInspect }: NodeCardProps) {
+  const t = useT();
   const [over, setOver] = useState(false);
 
   // When a detail inspector exists (the Field), all content-editing lives there — clicking a node or word
@@ -108,37 +112,37 @@ export function NodeCard({ node, index, total, onEdit, onRemove, onMove, onReord
           e.dataTransfer.setData(NODE_MIME, node.id);
           e.dataTransfer.effectAllowed = "move";
         }}
-        title="drag to reorder"
-        aria-label="drag to reorder"
+        title={t("nodecard.reorder")}
+        aria-label={t("nodecard.reorder")}
       >
         ⠿
       </span>
       {onInspect ? (
-        <button className={styles.ordinalBtn} onClick={onInspect} title="open in the node inspector">
+        <button className={styles.ordinalBtn} onClick={onInspect} title={t("nodecard.openInspector")}>
           {index + 1}
         </button>
       ) : (
         <span className={styles.ordinal}>{index + 1}</span>
       )}
       <div className={styles.words}>
-        <WordChip nodeId={node.id} slot="a" value={node.a} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} />
+        <WordChip nodeId={node.id} slot="a" value={node.a} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} t={t} />
         <span className={styles.rel}>↔</span>
-        <WordChip nodeId={node.id} slot="b" value={node.b} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} />
+        <WordChip nodeId={node.id} slot="b" value={node.b} onSwap={onSwap} onSetWord={onSetWord} onPick={openNode} t={t} />
       </div>
       <div className={styles.controls}>
-        <Button variant="ghost" onClick={() => onMove(node.id, -1)} disabled={index === 0} title="move up" aria-label="move up">
+        <Button variant="ghost" onClick={() => onMove(node.id, -1)} disabled={index === 0} title={t("nodecard.moveUp")} aria-label={t("nodecard.moveUp")}>
           ↑
         </Button>
-        <Button variant="ghost" onClick={() => onMove(node.id, 1)} disabled={index === total - 1} title="move down" aria-label="move down">
+        <Button variant="ghost" onClick={() => onMove(node.id, 1)} disabled={index === total - 1} title={t("nodecard.moveDown")} aria-label={t("nodecard.moveDown")}>
           ↓
         </Button>
         {/* the ✎ modal is only the fallback when there's no detail inspector (Spore Explorer); in the Field, the ordinal/words open the Node room */}
         {!onInspect && (
-          <Button variant="ghost" onClick={() => onEdit(node.id)} title="edit" aria-label="edit">
+          <Button variant="ghost" onClick={() => onEdit(node.id)} title={t("nodecard.edit")} aria-label={t("nodecard.edit")}>
             ✎
           </Button>
         )}
-        <Button variant="ghost" onClick={() => onRemove(node.id)} title="remove" aria-label="remove">
+        <Button variant="ghost" onClick={() => onRemove(node.id)} title={t("nodecard.remove")} aria-label={t("nodecard.remove")}>
           ✕
         </Button>
       </div>

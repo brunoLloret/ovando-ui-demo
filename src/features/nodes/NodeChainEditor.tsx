@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "../../components";
+import { useT } from "../../lib/i18n";
 import type { NodeChain } from "./useNodeChain";
 import { NodeCard } from "./NodeCard";
 import { NodeEditModal } from "./NodeEditModal";
@@ -22,6 +23,7 @@ export interface NodeChainEditorProps {
  * then add / remove / reorder / swap / edit, drag spores into slots. Open a node in the inspector.
  */
 export function NodeChainEditor({ chain, onPropose, onInspect, spores }: NodeChainEditorProps) {
+  const t = useT();
   const [editingId, setEditingId] = useState<string | null>(null);
   // "propose N" defaults to the number of nodes built so far, and tracks it until the user steps it.
   const [count, setCount] = useState(() => chain.nodes.length || 6);
@@ -72,31 +74,31 @@ export function NodeChainEditor({ chain, onPropose, onInspect, spores }: NodeCha
     <div className={styles.editor}>
       <div className={styles.header}>
         <span className={styles.title}>
-          Chain · {chain.nodes.length} node{chain.nodes.length === 1 ? "" : "s"}
+          {t("chain.title")} · {chain.nodes.length} {chain.nodes.length === 1 ? t("compose.node") : t("compose.nodes")}
         </span>
         <div className={styles.actions}>
           {onPropose && (
             <>
               <div className={styles.stepper}>
-                <span className={styles.stepLabel}>propose</span>
-                <button type="button" className={styles.stepBtn} onClick={() => stepCount(-1)} aria-label="fewer">
+                <span className={styles.stepLabel}>{t("chain.propose")}</span>
+                <button type="button" className={styles.stepBtn} onClick={() => stepCount(-1)} aria-label={t("chain.fewer")}>
                   −
                 </button>
                 <span className={styles.stepVal}>{count}</span>
-                <button type="button" className={styles.stepBtn} onClick={() => stepCount(1)} aria-label="more">
+                <button type="button" className={styles.stepBtn} onClick={() => stepCount(1)} aria-label={t("chain.more")}>
                   +
                 </button>
               </div>
               {confirming ? (
                 <>
                   <span className={styles.confirmMsg}>
-                    replace all {chain.nodes.length} node{chain.nodes.length === 1 ? "" : "s"} (and their relations &amp; sub-nodes)?
+                    {t("chain.confirmReplace", { count: `${chain.nodes.length} ${chain.nodes.length === 1 ? t("compose.node") : t("compose.nodes")}` })}
                   </span>
                   <Button variant="primary" onClick={runPropose} disabled={busy}>
-                    {busy ? "proposing…" : "replace"}
+                    {busy ? t("chain.proposing") : t("chain.replace")}
                   </Button>
                   <Button variant="ghost" onClick={() => setConfirming(false)} disabled={busy}>
-                    keep mine
+                    {t("chain.keepMine")}
                   </Button>
                 </>
               ) : (
@@ -104,31 +106,31 @@ export function NodeChainEditor({ chain, onPropose, onInspect, spores }: NodeCha
                   <Button
                     onClick={onProposeClick}
                     disabled={busy}
-                    title={hasNodes ? "ask the model for a FRESH set of node-pairs from your Vision — this REPLACES the current chain" : "ask the model for a set of node-pairs from your Vision spores"}
+                    title={hasNodes ? t("chain.proposeFreshTitle") : t("chain.proposeNodesTitle")}
                   >
-                    {busy ? "proposing…" : hasNodes ? "propose fresh set" : "propose nodes"}
+                    {busy ? t("chain.proposing") : hasNodes ? t("chain.proposeFresh") : t("chain.proposeNodes")}
                   </Button>
                   {hasNodes && (
                     <Button
                       variant="ghost"
                       onClick={runAppend}
                       disabled={busy}
-                      title="append fresh node-pairs from your Vision to the END of the chain — keeps everything you built"
+                      title={t("chain.appendTitle")}
                     >
-                      ＋ {count} more
+                      {t("chain.appendMore", { count })}
                     </Button>
                   )}
                 </>
               )}
             </>
           )}
-          <Button onClick={() => chain.add()}>+ add node</Button>
+          <Button onClick={() => chain.add()}>{t("chain.addNode")}</Button>
         </div>
       </div>
 
       {chain.nodes.length === 0 ? (
         <div className={styles.empty}>
-          No nodes yet — propose a set, or add one by hand. Each node is two words in tension.
+          {t("chain.empty")}
         </div>
       ) : (
         <div className={styles.list}>

@@ -1,18 +1,22 @@
 import { Picker, TextInput, type PickerOption } from "../../../components";
+import { useT } from "../../../lib/i18n";
+import type { MessageKey } from "../../../lib/i18n";
 import type { RoomsState, SectionView } from "../roomsState";
 import type { Controllers } from "../types";
 import styles from "./rooms.module.css";
 
+type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
 /** One section: its prose + an expandable "plan" (the levers the run used to write it). */
-function SectionCard({ section: s }: { section: SectionView }) {
-  const plan: [string, string | undefined][] = [
-    ["objective", s.objective],
-    ["situation", s.situation],
-    ["entry point", s.entryPoint],
-    ["obstacle", s.obstacle],
-    ["inner", s.innerExperience],
-    ["unsaid", s.unsaid],
-    ["actant", s.actant],
+function SectionCard({ section: s, t }: { section: SectionView; t: T }) {
+  const plan: [MessageKey, string | undefined][] = [
+    ["telling.plan.objective", s.objective],
+    ["telling.plan.situation", s.situation],
+    ["telling.plan.entryPoint", s.entryPoint],
+    ["telling.plan.obstacle", s.obstacle],
+    ["telling.plan.inner", s.innerExperience],
+    ["telling.plan.unsaid", s.unsaid],
+    ["telling.plan.actant", s.actant],
   ];
   const hasPlan = plan.some(([, v]) => v);
   return (
@@ -26,13 +30,13 @@ function SectionCard({ section: s }: { section: SectionView }) {
       {s.prose && <div className={styles.prose}>{s.prose}</div>}
       {hasPlan && (
         <details className={styles.planDetails}>
-          <summary className={styles.planSummary}>the plan for this section ▸</summary>
+          <summary className={styles.planSummary}>{t("telling.planToggle")}</summary>
           <div className={styles.planGrid}>
             {plan
               .filter(([, v]) => v)
               .map(([k, v]) => (
                 <div key={k} className={styles.planRow}>
-                  <span className={styles.planKey}>{k}</span>
+                  <span className={styles.planKey}>{t(k)}</span>
                   <span className={styles.planVal}>{v}</span>
                 </div>
               ))}
@@ -43,28 +47,12 @@ function SectionCard({ section: s }: { section: SectionView }) {
   );
 }
 
-const FORMATS: PickerOption[] = [
-  { value: "linear", label: "linear", description: "The default — start here. Told in order; see what emerges before rearranging." },
-  { value: "derived", label: "derived", description: "The model picks the arrangement it judges best for the material." },
-  { value: "in-medias-res", label: "in-medias-res", description: "Opens in the middle of the action, then fills in the past." },
-  { value: "palindrome", label: "palindrome", description: "Runs forward, then mirrors back — the shape repeats in reverse." },
-  { value: "frame", label: "frame", description: "A story inside a story — an outer scene holds the inner one." },
-  { value: "rupture", label: "rupture", description: "A sudden break or jump that dislocates the reader on purpose." },
-  { value: "picaresque", label: "picaresque", description: "A loose chain of episodes — one thing after another." },
-  { value: "spiral", label: "spiral", description: "Circles the same point, each pass wider or deeper." },
-  { value: "fugue", label: "fugue", description: "Several voices or threads interwoven in counterpoint." },
-  { value: "fold", label: "fold", description: "Two strands that cross and mirror each other." },
-  { value: "braid", label: "braid", description: "A few parallel threads plaited together, crossing throughout." },
-];
-const POVS: PickerOption[] = [
-  { value: "", label: "explore (rotate)" },
-  { value: "she", label: "she — third person" },
-  { value: "he", label: "he — third person" },
-  { value: "they", label: "they — third person plural" },
-  { value: "i", label: "I — first person" },
-  { value: "we", label: "we — first person plural" },
-  { value: "you", label: "you — second person" },
-];
+const FORMAT_VALUES = ["linear", "derived", "in-medias-res", "palindrome", "frame", "rupture", "picaresque", "spiral", "fugue", "fold", "braid"] as const;
+const POV_VALUES = ["", "she", "he", "they", "i", "we", "you"] as const;
+const POV_KEY: Record<string, MessageKey> = {
+  "": "telling.pov.explore", she: "telling.pov.she", he: "telling.pov.he",
+  they: "telling.pov.they", i: "telling.pov.i", we: "telling.pov.we", you: "telling.pov.you",
+};
 
 export interface TellingRoomProps {
   controllers: Controllers;
@@ -77,17 +65,24 @@ export interface TellingRoomProps {
 
 /** Station 5: how the chain is told — montage · point of view · section length; sections stream in. */
 export function TellingRoom({ controllers, onChange, telling, running, forceSetup }: TellingRoomProps) {
+  const t = useT();
+  const formats: PickerOption[] = FORMAT_VALUES.map((v) => ({
+    value: v,
+    label: t(`telling.format.${v}.label` as MessageKey),
+    description: t(`telling.format.${v}.desc` as MessageKey),
+  }));
+  const povs: PickerOption[] = POV_VALUES.map((v) => ({ value: v, label: t(POV_KEY[v]) }));
   return (
     <div className={styles.room}>
-      <div className={styles.title}>Telling — montage · grammar · sections</div>
+      <div className={styles.title}>{t("telling.title")}</div>
 
       {(!running || forceSetup) && (
         <>
           <div className={styles.setup}>
-            <Picker label="montage" value={controllers.format} options={FORMATS} onChange={(v) => onChange({ format: v })} />
-            <Picker label="pov" value={controllers.pov} options={POVS} onChange={(v) => onChange({ pov: v })} />
+            <Picker label={t("telling.montage")} value={controllers.format} options={formats} onChange={(v) => onChange({ format: v })} />
+            <Picker label={t("telling.pov")} value={controllers.pov} options={povs} onChange={(v) => onChange({ pov: v })} />
             <TextInput
-              label="words"
+              label={t("telling.words")}
               type="number"
               min={80}
               max={600}
@@ -100,7 +95,7 @@ export function TellingRoom({ controllers, onChange, telling, running, forceSetu
             />
           </div>
           <div className={styles.muted} style={{ marginTop: 10 }}>
-            how the chain is told — order, point of view, section length. The sections appear here as they're written.
+            {t("telling.howTold")}
           </div>
         </>
       )}
@@ -113,7 +108,7 @@ export function TellingRoom({ controllers, onChange, telling, running, forceSetu
           </div>
           <div className={styles.stack} style={{ marginTop: 8 }}>
             {telling.sections.map((s) => (
-              <SectionCard key={s.n} section={s} />
+              <SectionCard key={s.n} section={s} t={t} />
             ))}
           </div>
         </div>

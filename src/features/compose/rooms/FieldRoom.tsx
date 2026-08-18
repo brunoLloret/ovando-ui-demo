@@ -1,4 +1,5 @@
 import { NodeChainEditor, type NodeChain, type NodePair } from "../../nodes";
+import { useT } from "../../../lib/i18n";
 import type { ChainNodeView } from "../roomsState";
 import styles from "./rooms.module.css";
 
@@ -19,15 +20,16 @@ export interface FieldRoomProps {
  * it shows the built chain with each relation (click to inspect).
  */
 export function FieldRoom({ chain, onPropose, onInspect, generated, running }: FieldRoomProps) {
+  const t = useT();
   const showBuilt = running || generated.length > 0;
   return (
     <div className={styles.room}>
-      <div className={styles.title}>Field — the relational space where meaning emerges</div>
+      <div className={styles.title}>{t("field.title")}</div>
       {showBuilt ? (
         <div className={styles.stack}>
-          {generated.length === 0 && <div className={styles.muted}>building the chain…</div>}
+          {generated.length === 0 && <div className={styles.muted}>{t("field.building")}</div>}
           {generated.map((n) => (
-            <button key={n.i} className={styles.builtRow} onClick={() => onInspect(n.i - 1)} title="inspect this node">
+            <button key={n.i} className={styles.builtRow} onClick={() => onInspect(n.i - 1)} title={t("field.inspect")}>
               <div className={styles.poles}>
                 <b>{n.a}</b>
                 <span className={styles.rel}>↔</span>

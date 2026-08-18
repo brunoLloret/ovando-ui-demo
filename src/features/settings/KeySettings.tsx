@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button, Modal, Picker, TextInput, Toggle, type PickerOption } from "../../components";
 import { getKey, setKey, clearKey, validateKey, type Provider } from "../../lib/keys";
+import { useT } from "../../lib/i18n";
 import styles from "./KeySettings.module.css";
-
-const PROVIDERS: PickerOption[] = [
-  { value: "gemini",    label: "Gemini",    description: "Google AI Studio — free tier, no credit card required. Recommended." },
-  { value: "openai",    label: "OpenAI",    description: "ChatGPT API — requires a paid OpenAI account." },
-  { value: "anthropic", label: "Anthropic", description: "Claude API — requires a paid Anthropic account." },
-];
 
 const PLACEHOLDER: Record<Provider, string> = {
   gemini:    "AIza…",
@@ -23,6 +18,12 @@ export interface KeySettingsProps {
 }
 
 export function KeySettings({ open, onClose }: KeySettingsProps) {
+  const t = useT();
+  const PROVIDERS: PickerOption[] = [
+    { value: "gemini", label: "Gemini", description: t("key.provider.gemini.desc") },
+    { value: "openai", label: "OpenAI", description: t("key.provider.openai.desc") },
+    { value: "anthropic", label: "Anthropic", description: t("key.provider.anthropic.desc") },
+  ];
   const saved = getKey();
   const [provider, setProvider] = useState<Provider>(saved?.provider ?? "gemini");
   const [keyInput, setKeyInput] = useState("");
@@ -41,16 +42,16 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
 
   const check = useCallback(async () => {
     const trimmed = keyInput.trim();
-    if (!trimmed) { setState({ error: "Paste your key first." }); return; }
+    if (!trimmed) { setState({ error: t("key.pasteFirst") }); return; }
     setState("checking");
     const result = await validateKey(provider, trimmed);
     if (result.valid) {
       setKey(provider, trimmed, persist);
       setState("ok");
     } else {
-      setState({ error: result.error ?? "Invalid key." });
+      setState({ error: result.error ?? t("key.invalid") });
     }
-  }, [provider, keyInput, persist]);
+  }, [provider, keyInput, persist, t]);
 
   const clear = useCallback(() => {
     clearKey();
@@ -62,8 +63,8 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
   const isChecking = state === "checking";
 
   const stateLabel =
-    state === "checking" ? "Checking…" :
-    state === "ok"       ? "✓ Key accepted — live mode active" :
+    state === "checking" ? t("key.checking") :
+    state === "ok"       ? t("key.accepted") :
     typeof state === "object" ? `✗ ${state.error}` : null;
 
   const stateCls =
@@ -74,44 +75,44 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
   return (
     <Modal
       open={open}
-      title="Provider key"
+      title={t("key.title")}
       onClose={onClose}
       footer={
         <div className={styles.footer}>
           {hasSaved && (
-            <Button variant="ghost" onClick={clear}>Clear key</Button>
+            <Button variant="ghost" onClick={clear}>{t("key.clear")}</Button>
           )}
-          <Button variant="ghost" onClick={onClose}>Close</Button>
+          <Button variant="ghost" onClick={onClose}>{t("key.close")}</Button>
           <Button
             variant="primary"
             onClick={() => void check()}
             disabled={isChecking || !keyInput.trim()}
           >
-            {isChecking ? "Checking…" : "Check key"}
+            {isChecking ? t("key.checking") : t("key.check")}
           </Button>
         </div>
       }
     >
       <div className={styles.body}>
         <p className={styles.trust}>
-          Your key stays in your browser and is only used to run your requests — we never store or log it.
+          {t("key.trust")}
         </p>
 
         <p className={styles.hint}>
-          No key?{" "}
+          {t("key.hint.pre")}
           <a
             href="https://aistudio.google.com/apikey"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Get a free Gemini key
-          </a>{" "}
-          — no card, ~1 min.
+            {t("key.hint.link")}
+          </a>
+          {t("key.hint.post")}
         </p>
 
         <div className={styles.field}>
           <Picker
-            label="Provider"
+            label={t("key.provider")}
             value={provider}
             options={PROVIDERS}
             onChange={(v) => { setProvider(v as Provider); setState("idle"); }}
@@ -120,7 +121,7 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
 
         <div className={styles.field}>
           <TextInput
-            label="API key"
+            label={t("key.apiKey")}
             type="password"
             placeholder={PLACEHOLDER[provider]}
             value={keyInput}
@@ -134,7 +135,7 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
           <Toggle
             checked={persist}
             onChange={setPersist}
-            label="Remember on this device"
+            label={t("key.remember")}
           />
         </div>
 

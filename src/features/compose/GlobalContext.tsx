@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import type { CastMember, Dramatization, Force } from "../../lib/types";
+import { useT, type MessageKey } from "../../lib/i18n";
 import type { ChainNodeView, SectionView } from "./roomsState";
 import styles from "./GlobalContext.module.css";
+
+type T = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** The read-only snapshot of the shared state, assembled by ComposePage from the live rooms. */
 export interface GlobalContextData {
@@ -54,24 +57,24 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function buildLayers(d: GlobalContextData): Layer[] {
+function buildLayers(d: GlobalContextData, t: T): Layer[] {
   const muted = <span className={styles.muted}>—</span>;
   return [
     {
       key: "direction",
-      label: "Direction",
+      label: t("gc.layer.direction"),
       status: d.premise ? "full" : "open",
       body: (
         <>
-          <Field label="premise (the writer's spine — wins over the chain)">{d.premise || <span className={styles.muted}>none — the chain drives</span>}</Field>
-          <Field label="registers">{d.registers.length ? d.registers.join(" · ") : muted}</Field>
-          <Field label="model">{d.model}</Field>
+          <Field label={t("gc.premise")}>{d.premise || <span className={styles.muted}>{t("gc.premiseNone")}</span>}</Field>
+          <Field label={t("gc.registers")}>{d.registers.length ? d.registers.join(" · ") : muted}</Field>
+          <Field label={t("gc.model")}>{d.model}</Field>
         </>
       ),
     },
     {
       key: "field",
-      label: "Field · chain",
+      label: t("gc.layer.field"),
       status: d.chain.length ? "full" : "open",
       body: d.chain.length ? (
         <div className={styles.list}>
@@ -84,81 +87,81 @@ function buildLayers(d: GlobalContextData): Layer[] {
             </div>
           ))}
         </div>
-      ) : <span className={styles.muted}>no nodes yet — build the chain in the Field.</span>,
+      ) : <span className={styles.muted}>{t("gc.fieldEmpty")}</span>,
     },
     {
       key: "forces",
-      label: "Forces",
+      label: t("gc.layer.forces"),
       status: d.forces ? "full" : "open",
       body: d.forces ? (
         <>
-          {d.forces.central_conflict && <Field label="central conflict">{d.forces.central_conflict}</Field>}
-          {d.forces.human_match && <Field label="human situation">{d.forces.human_match}</Field>}
+          {d.forces.central_conflict && <Field label={t("gc.centralConflict")}>{d.forces.central_conflict}</Field>}
+          {d.forces.human_match && <Field label={t("gc.humanSituation")}>{d.forces.human_match}</Field>}
           <div className={styles.list}>
             {d.agents.map((a, i) => (
               <div key={`${a.name}-${i}`} className={styles.row}>
                 <b>{a.name}</b>
-                {a.intention && <span className={styles.sub}>wants {a.intention}</span>}
-                {(a.action || a.emotion) && <div className={styles.sub}>{[a.action && `does ${a.action}`, a.emotion && `feels ${a.emotion}`].filter(Boolean).join(" · ")}</div>}
+                {a.intention && <span className={styles.sub}>{t("gc.wants", { intention: a.intention })}</span>}
+                {(a.action || a.emotion) && <div className={styles.sub}>{[a.action && t("gc.does", { action: a.action }), a.emotion && t("gc.feels", { emotion: a.emotion })].filter(Boolean).join(" · ")}</div>}
               </div>
             ))}
           </div>
         </>
-      ) : <span className={styles.muted}>not generated yet — go to Forces.</span>,
+      ) : <span className={styles.muted}>{t("gc.forcesEmpty")}</span>,
     },
     {
       key: "telling",
-      label: "Telling · form",
+      label: t("gc.layer.telling"),
       status: d.sections.length ? "full" : d.format ? "partial" : "open",
       body: (
         <>
-          <Field label="montage · pov · length">{d.format || "linear"} · {d.pov || "explore"} · ~{d.words ?? 200}w</Field>
+          <Field label={t("gc.montagePovLength")}>{d.format || "linear"} · {d.pov || t("gc.povExplore")} · ~{d.words ?? 200}w</Field>
           {d.sections.length ? (
             <div className={styles.list}>
               {d.sections.map((s) => (
                 <div key={s.n} className={styles.row}>
                   <b>§{s.n}{s.sceneTitle ? ` — ${s.sceneTitle}` : ""}</b>
                   {s.coordinate && <div className={styles.sub}>{s.coordinate}</div>}
-                  {s.objective && <div className={styles.sub}>obj: {s.objective}</div>}
-                  {s.obstacle && <div className={styles.sub}>obstacle: {s.obstacle}</div>}
-                  {s.unsaid && <div className={styles.sub}>unsaid: {s.unsaid}</div>}
+                  {s.objective && <div className={styles.sub}>{t("gc.obj", { v: s.objective })}</div>}
+                  {s.obstacle && <div className={styles.sub}>{t("gc.obstacle", { v: s.obstacle })}</div>}
+                  {s.unsaid && <div className={styles.sub}>{t("gc.unsaid", { v: s.unsaid })}</div>}
                 </div>
               ))}
             </div>
-          ) : <span className={styles.muted}>no sections yet — write the story in Telling.</span>}
+          ) : <span className={styles.muted}>{t("gc.sectionsEmpty")}</span>}
         </>
       ),
     },
     {
       key: "questions",
-      label: "Open questions",
+      label: t("gc.layer.questions"),
       status: "open",
       body: (
         <span className={styles.muted}>
-          Not tracked yet. The engine has a question audit (explicitly/implicitly answered · raised · deferred) and deferred-obligations — wiring it into the controlled flow is the next consistency layer.
+          {t("gc.questionsBody")}
         </span>
       ),
     },
     {
       key: "work",
-      label: "Work",
+      label: t("gc.layer.work"),
       status: d.work ? "full" : "open",
       body: (
         <>
-          {d.cast && d.cast.length > 0 && <Field label="cast">{d.cast.map((c) => c.name).join(" · ")}</Field>}
-          {d.work ? <div className={styles.work}>{d.work}</div> : <span className={styles.muted}>not written yet.</span>}
+          {d.cast && d.cast.length > 0 && <Field label={t("gc.cast")}>{d.cast.map((c) => c.name).join(" · ")}</Field>}
+          {d.work ? <div className={styles.work}>{d.work}</div> : <span className={styles.muted}>{t("gc.workEmpty")}</span>}
         </>
       ),
     },
     {
       key: "provenance",
-      label: "Provenance",
+      label: t("gc.layer.provenance"),
       status: d.runName ? "full" : "partial",
       body: (
         <>
-          <Field label="run">{d.runName || <span className={styles.muted}>not persisted yet</span>}</Field>
-          <Field label="model">{d.model}</Field>
-          <Field label="events this session">{d.events}</Field>
+          <Field label={t("gc.run")}>{d.runName || <span className={styles.muted}>{t("gc.runNone")}</span>}</Field>
+          <Field label={t("gc.model")}>{d.model}</Field>
+          <Field label={t("gc.events")}>{d.events}</Field>
         </>
       ),
     },
@@ -212,6 +215,7 @@ function TrackingIris({ open }: { open: boolean }) {
 /** A draggable hexagon that opens the Global Context — a read-only two-pane inspector of the shared
  * state (Direction · Field · Forces · Telling · Questions · Work · Provenance). */
 export function GlobalContext(props: GlobalContextData) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(() => ({ x: typeof window !== "undefined" ? window.innerWidth - 84 : 1180, y: 150 }));
   const [active, setActive] = useState("direction");
@@ -224,7 +228,7 @@ export function GlobalContext(props: GlobalContextData) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const layers = useMemo(() => buildLayers(props), [props]);
+  const layers = useMemo(() => buildLayers(props, t), [props, t]);
   const current = layers.find((l) => l.key === active) ?? layers[0];
 
   const onPointerDown = (e: ReactPointerEvent) => {
@@ -257,8 +261,8 @@ export function GlobalContext(props: GlobalContextData) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        title="Global Context — the shared state (drag me anywhere; click to open)"
-        aria-label="Global Context"
+        title={t("gc.hexTitle")}
+        aria-label={t("gc.title")}
         aria-pressed={open}
       >
         <svg className={styles.svg} viewBox="0 0 100 92" width={HEX_SIZE} height={Math.round((HEX_SIZE * 92) / 100)}>
@@ -283,10 +287,10 @@ export function GlobalContext(props: GlobalContextData) {
       {open && (
         <div className={styles.panel} style={{ left: panelLeft, top: panelTop }}>
           <div className={styles.head}>
-            <span className={styles.title}>Global Context</span>
+            <span className={styles.title}>{t("gc.title")}</span>
             {props.runName && <span className={styles.runChip}>{props.runName}</span>}
             <span className={styles.spacer} />
-            <button className={styles.close} onClick={() => setOpen(false)} aria-label="close">✕</button>
+            <button className={styles.close} onClick={() => setOpen(false)} aria-label={t("gc.close")}>✕</button>
           </div>
           <div className={styles.body}>
             <nav className={styles.nav}>

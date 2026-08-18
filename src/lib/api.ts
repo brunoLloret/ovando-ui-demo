@@ -7,6 +7,7 @@
 
 import { getMode, getActiveFixture } from "./mode";
 import { getKey } from "./keys";
+import { getLocale } from "./locale";
 import { replayRun, resolveReplayChoice } from "../features/run/replay";
 
 import type {
@@ -46,9 +47,14 @@ function replayStub(url: string): unknown {
 // ── Key header injection ──────────────────────────────────────────────────────
 
 function keyHeaders(): Record<string, string> {
+  // every request carries the chosen language so the backend generates in it
+  const headers: Record<string, string> = { "X-Language": getLocale() };
   const k = getKey();
-  if (!k) return {};
-  return { "X-Provider": k.provider, "X-Provider-Key": k.key };
+  if (k) {
+    headers["X-Provider"] = k.provider;
+    headers["X-Provider-Key"] = k.key;
+  }
+  return headers;
 }
 
 // ── Core fetch helpers ────────────────────────────────────────────────────────

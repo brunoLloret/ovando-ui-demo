@@ -1,31 +1,16 @@
 import { JsonView } from "../../components";
 import type { SandboxEvent } from "../../lib/types";
 import { downloadJson } from "../../lib/download";
+import { useT, type MessageKey } from "../../lib/i18n";
 import styles from "./RawTrace.module.css";
+
+const PHASE_STEPS = new Set(["vision", "keys", "field", "node", "chain", "choice", "dramatize", "plan", "cast", "section", "run", "frozen", "error"]);
 
 export interface RawTraceProps {
   events: SandboxEvent[];
   /** What the writer fed in — the run's ingested controllers/material. */
   inputs: Record<string, unknown>;
 }
-
-/** A friendly label + one-line "what this phase does" for each event step. */
-const PHASE: Record<string, { label: string; desc: string }> = {
-  vision: { label: "Vision", desc: "seed → a material field (statement · charge)" },
-  keys: { label: "Keys", desc: "the field → charged key words" },
-  field: { label: "First node", desc: "two words → their relation" },
-  node: { label: "Chain nodes", desc: "each pair → a relation (kind · schema · process)" },
-  chain: { label: "Chain built", desc: "the assembled relational skeleton" },
-  "chain-built": { label: "Chain built", desc: "the assembled relational skeleton" },
-  choice: { label: "Joints", desc: "the forks you picked (I-pick)" },
-  dramatize: { label: "Forces", desc: "the chain → a human situation (agents · conflict · match)" },
-  plan: { label: "Telling plan", desc: "the forces → a montage / discourse order" },
-  cast: { label: "Cast", desc: "the agents → named characters" },
-  section: { label: "Sections", desc: "the plan → prose, one section at a time" },
-  run: { label: "Run", desc: "start / done — the finished work" },
-  frozen: { label: "Frozen", desc: "the run was paused into a draft" },
-  error: { label: "Error", desc: "something failed" },
-};
 
 /** Group events by step, preserving first-seen order; repeated steps collect into arrays. */
 function groupByPhase(events: SandboxEvent[]): Array<{ step: string; items: SandboxEvent[] }> {
@@ -47,32 +32,37 @@ function groupByPhase(events: SandboxEvent[]): Array<{ step: string; items: Sand
  * grouped by step (input → output made legible), plus the full event stream. Collapsed by default.
  */
 export function RawTrace({ events, inputs }: RawTraceProps) {
+  const t = useT();
   if (events.length === 0) return null;
   const groups = groupByPhase(events);
+  const phaseMeta = (step: string) =>
+    PHASE_STEPS.has(step)
+      ? { label: t(`trace.phase.${step}.label` as MessageKey), desc: t(`trace.phase.${step}.desc` as MessageKey) }
+      : { label: step, desc: "" };
   return (
     <details className={styles.wrap}>
-      <summary className={styles.summary}>raw trace — what each phase ingested &amp; emitted ({events.length} events)</summary>
+      <summary className={styles.summary}>{t("trace.summary", { n: events.length })}</summary>
       <div className={styles.body}>
         <div className={styles.exportRow}>
           <button
             type="button"
             className={styles.exportBtn}
             onClick={() => downloadJson("run-trace.json", { inputs, events })}
-            title="Download this run's inputs + full event stream as JSON (reload it deterministically)"
+            title={t("trace.exportTitle")}
           >
-            ↓ export run (.json)
+            {t("trace.export")}
           </button>
         </div>
         <div className={styles.phase}>
           <div className={styles.phaseHead}>
-            <span className={styles.phaseLabel}>Inputs</span>
-            <span className={styles.phaseDesc}>what you fed the run</span>
+            <span className={styles.phaseLabel}>{t("trace.inputs")}</span>
+            <span className={styles.phaseDesc}>{t("trace.inputsDesc")}</span>
           </div>
-          <JsonView value={inputs} label="ingested inputs" />
+          <JsonView value={inputs} label={t("trace.ingested")} />
         </div>
 
         {groups.map(({ step, items }) => {
-          const meta = PHASE[step] ?? { label: step, desc: "" };
+          const meta = phaseMeta(step);
           const value = items.length === 1 ? items[0] : items;
           return (
             <div key={step} className={styles.phase}>
@@ -81,13 +71,13 @@ export function RawTrace({ events, inputs }: RawTraceProps) {
                 <span className={styles.phaseDesc}>{meta.desc}</span>
                 {items.length > 1 && <span className={styles.count}>×{items.length}</span>}
               </div>
-              <JsonView value={value} label={`${meta.label.toLowerCase()} — output`} />
+              <JsonView value={value} label={t("trace.output", { label: meta.label.toLowerCase() })} />
             </div>
           );
         })}
 
         <div className={styles.phase}>
-          <JsonView value={events} label={`full event stream (${events.length})`} />
+          <JsonView value={events} label={t("trace.stream", { n: events.length })} />
         </div>
       </div>
     </details>

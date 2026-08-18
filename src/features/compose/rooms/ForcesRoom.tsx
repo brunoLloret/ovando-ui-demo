@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../../components";
+import { useT } from "../../../lib/i18n";
 import type { Force } from "../../../lib/types";
 import type { RoomsState } from "../roomsState";
 import { ForceWorkshop } from "./ForceWorkshop";
@@ -29,6 +30,7 @@ export interface ForcesRoomProps {
  * force to deepen it. The reshaped set is what the story is written from.
  */
 export function ForcesRoom({ forces, agents, onGenerate, onAddNew, onDiscard, onRegenerate, running, canGenerate, busy }: ForcesRoomProps) {
+  const t = useT();
   const [workshop, setWorkshop] = useState<Force | null>(null);
   const [sel, setSel] = useState<number[]>([]);
   const busyAny = busy || running;
@@ -36,34 +38,34 @@ export function ForcesRoom({ forces, agents, onGenerate, onAddNew, onDiscard, on
 
   return (
     <div className={styles.room}>
-      <div className={styles.title}>Forces — the human story emerges</div>
+      <div className={styles.title}>{t("forces.title")}</div>
 
       {onGenerate && (
         <div className={styles.forcesGen}>
-          <Button variant="primary" onClick={onGenerate} disabled={busyAny || !canGenerate} title="find/refresh the whole dramatization from the chain — this stage only, not the story">
-            {running ? "generating…" : forces ? "↻ regenerate all" : "generate the forces →"}
+          <Button variant="primary" onClick={onGenerate} disabled={busyAny || !canGenerate} title={t("forces.genTitle")}>
+            {running ? t("forces.generating") : forces ? t("forces.regenAll") : t("forces.generate")}
           </Button>
-          <span className={styles.muted}>{canGenerate ? "from the chain you built — the story is written later, in Telling" : "define a node first"}</span>
+          <span className={styles.muted}>{canGenerate ? t("forces.fromChain") : t("forces.defineFirst")}</span>
         </div>
       )}
 
       {!forces ? (
-        <div className={styles.muted}>This stage emerges when you generate the forces — the human situation the chain becomes.</div>
+        <div className={styles.muted}>{t("forces.empty")}</div>
       ) : (
         <>
           {forces.human_match && <div className={styles.prose} style={{ marginBottom: 10 }}>{forces.human_match}</div>}
-          {forces.central_conflict && <div className={styles.schema}>conflict · {forces.central_conflict}</div>}
+          {forces.central_conflict && <div className={styles.schema}>{t("forces.conflict")} · {forces.central_conflict}</div>}
 
           <div className={styles.forcesBar}>
-            <span className={styles.muted}>discard · regenerate one · add · or select several to regenerate together</span>
+            <span className={styles.muted}>{t("forces.bar")}</span>
             <span className={styles.spacerFlex} />
             {sel.length > 0 && (
               <Button onClick={() => { onRegenerate(sel); setSel([]); }} disabled={busyAny}>
-                ↻ regenerate selected ({sel.length})
+                {t("forces.regenSelected", { n: sel.length })}
               </Button>
             )}
-            <Button variant="ghost" onClick={onAddNew} disabled={busyAny} title="generate one new force, distinct from the others">
-              ＋ new force
+            <Button variant="ghost" onClick={onAddNew} disabled={busyAny} title={t("forces.newForceTitle")}>
+              {t("forces.newForce")}
             </Button>
           </div>
 
@@ -72,26 +74,26 @@ export function ForcesRoom({ forces, agents, onGenerate, onAddNew, onDiscard, on
               const on = sel.includes(i);
               return (
                 <div key={`${a.name}-${i}`} className={[styles.forceRow, on && styles.forceRowSel].filter(Boolean).join(" ")}>
-                  <button className={styles.forceCheck} onClick={() => toggle(i)} aria-label={on ? "deselect force" : "select force"} title="select to regenerate with others">
+                  <button className={styles.forceCheck} onClick={() => toggle(i)} aria-label={on ? t("forces.deselect") : t("forces.select")} title={t("forces.selectToRegen")}>
                     {on ? "☑" : "☐"}
                   </button>
-                  <button className={styles.forceMain} onClick={() => setWorkshop(a)} title="work this force — deepen it">
+                  <button className={styles.forceMain} onClick={() => setWorkshop(a)} title={t("forces.workTitle")}>
                     <b>{a.name}</b>
-                    {a.intention && <span className={styles.forceWant}> — wants {a.intention}</span>}
+                    {a.intention && <span className={styles.forceWant}> {t("forces.wants", { intention: a.intention })}</span>}
                     {(a.action || a.emotion) && (
-                      <div className={styles.forceSub}>{[a.action && `does ${a.action}`, a.emotion && `feels ${a.emotion}`].filter(Boolean).join(" · ")}</div>
+                      <div className={styles.forceSub}>{[a.action && t("forces.does", { action: a.action }), a.emotion && t("forces.feels", { emotion: a.emotion })].filter(Boolean).join(" · ")}</div>
                     )}
                   </button>
                   <div className={styles.forceActions}>
-                    <Button variant="ghost" onClick={() => onRegenerate([i])} disabled={busyAny} title="regenerate this force" aria-label="regenerate">↻</Button>
-                    <Button variant="ghost" onClick={() => onDiscard(i)} disabled={busyAny} title="discard this force" aria-label="discard">✕</Button>
+                    <Button variant="ghost" onClick={() => onRegenerate([i])} disabled={busyAny} title={t("forces.regenOne")} aria-label={t("forces.regenerate")}>↻</Button>
+                    <Button variant="ghost" onClick={() => onDiscard(i)} disabled={busyAny} title={t("forces.discardOne")} aria-label={t("forces.discard")}>✕</Button>
                   </div>
                 </div>
               );
             })}
-            {agents.length === 0 && <div className={styles.muted}>no forces left — add one, or regenerate all.</div>}
+            {agents.length === 0 && <div className={styles.muted}>{t("forces.emptyList")}</div>}
           </div>
-          {busy && <div className={styles.muted} style={{ marginTop: 8 }}>working…</div>}
+          {busy && <div className={styles.muted} style={{ marginTop: 8 }}>{t("forces.working")}</div>}
 
           <ForceWorkshop force={workshop} conflict={forces.central_conflict} onClose={() => setWorkshop(null)} />
         </>

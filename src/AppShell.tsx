@@ -5,6 +5,7 @@ import { useMode, setMode } from "./lib/mode";
 import { getKey } from "./lib/keys";
 import { useLocale, setLocale, type Locale } from "./lib/locale";
 import { useT } from "./lib/i18n";
+import styles from "./AppShell.module.css";
 import { ComposePage } from "./features/compose";
 import { ProjectsPage } from "./features/projects/ProjectsPage";
 import { RunsTab, WindowsTab, AnalysisTab, CalibrationTab } from "./features/data/DataTabs";
@@ -43,10 +44,10 @@ export function AppShell() {
   return (
     <div>
       <KeySettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 1rem" }}>
+      <div className={styles.header}>
         <Tabs tabs={TABS} active={active} onSelect={setActive} />
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <div style={{ display: "flex", gap: 2 }}>
+        <div className={styles.controls}>
+          <div className={styles.locale}>
             {(["en", "es"] as Locale[]).map((l) => (
               <Button
                 key={l}

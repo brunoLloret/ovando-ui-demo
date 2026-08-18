@@ -90,6 +90,18 @@
   box-shadow: 5px 5px 0 0 var(--ink);
   overflow: hidden;
 }
+/* Phones: ignore the drag-anchored position and dock the panel as a full-width bottom sheet
+   (the inline left/top from the component are overridden here). */
+@media (max-width: 640px) {
+  .panel {
+    left: 8px !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    max-height: 70dvh;
+  }
+}
 .head {
   display: flex;
   align-items: center;

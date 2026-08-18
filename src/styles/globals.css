@@ -1,5 +1,15 @@
 @import "./tokens.css";
 
+/*
+ * Responsive breakpoints used across the app (max-width, desktop-first):
+ *   1024px — tablet landscape / small laptop
+ *    768px — tablet portrait
+ *    640px — large phone / small tablet (the primary nav swaps here)
+ *    480px — phone
+ * Touch is detected with `@media (pointer: coarse)` (bigger tap targets) and
+ * hover-less devices with `@media (hover: none)` (reveal hover-only content).
+ */
+
 * {
   box-sizing: border-box;
 }
@@ -12,6 +22,16 @@ body {
   font-size: 13px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  /* clip (not hidden) kills stray horizontal scroll without creating a scroll
+     container — so position: sticky keeps working. */
+  overflow-x: clip;
+}
+
+/* media never overflows its container on narrow screens */
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 /* shared type registers (mirror the current .pph-* utilities) */

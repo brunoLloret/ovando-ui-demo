@@ -9,12 +9,19 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   box-shadow: var(--key-shadow) var(--key-shadow) 0 0 var(--ink);
   transition:
     transform 0.06s,
     box-shadow 0.06s,
     background 0.14s;
+}
+/* Touch devices: guarantee a comfortable tap target (≥44px) on every button. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+  }
 }
 .btn:hover {
   transform: translate(-1px, -1px);

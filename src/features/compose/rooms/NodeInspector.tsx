@@ -114,9 +114,9 @@ export function NodeInspector({ chain, selectedIndex, onSelectIndex, generated, 
       </div>
 
       <div className={styles.words}>
-        <TextInput label={t("node.wordA")} value={node.a} onChange={(e) => chain.update(node.id, { a: e.target.value.toLowerCase() })} style={{ width: 160 }} />
+        <TextInput label={t("node.wordA")} value={node.a} onChange={(e) => chain.update(node.id, { a: e.target.value.toLowerCase() })} style={{ flex: "1 1 130px", minWidth: 0 }} />
         <Button variant="ghost" onClick={() => chain.swapWords(node.id, "a", node.id, "b")} title={t("node.swap")}>⇄</Button>
-        <TextInput label={t("node.wordB")} value={node.b} onChange={(e) => chain.update(node.id, { b: e.target.value.toLowerCase() })} style={{ width: 160 }} />
+        <TextInput label={t("node.wordB")} value={node.b} onChange={(e) => chain.update(node.id, { b: e.target.value.toLowerCase() })} style={{ flex: "1 1 130px", minWidth: 0 }} />
       </div>
 
       {err && <div className={styles.err}>{err}</div>}

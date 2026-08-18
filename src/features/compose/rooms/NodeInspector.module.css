@@ -17,6 +17,7 @@
   align-items: flex-end;
   gap: 10px;
   margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .err {
   color: var(--danger);
@@ -97,6 +98,17 @@
   height: 0;
   margin-top: 0;
 }
+/* Touch has no hover — show the full prose up front and drop the "hover to read" hint. */
+@media (hover: none) {
+  .reveal {
+    max-height: 400px;
+    opacity: 1;
+    margin-top: 6px;
+  }
+  .revealHint {
+    display: none;
+  }
+}
 .established {
   border: 2px solid var(--ochre);
   border-radius: var(--radius);
@@ -152,4 +164,5 @@
   margin-top: 18px;
   padding-top: 14px;
   border-top: 1px solid rgba(26, 26, 26, 0.1);
+  flex-wrap: wrap;
 }

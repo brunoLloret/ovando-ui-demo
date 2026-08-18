@@ -16,9 +16,30 @@
   padding: 18px 20px;
   width: 100%;
   max-width: 440px;
+  /* tall modals scroll inside themselves instead of pushing off-screen */
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
 }
 .wide {
   max-width: 680px;
+}
+
+/* Phones: the modal becomes a bottom sheet — full width, flush to the bottom,
+   rounded top corners, and it can grow to most of the viewport before scrolling. */
+@media (max-width: 640px) {
+  .backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .card,
+  .wide {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    border-bottom: none;
+    box-shadow: 0 -3px 0 0 var(--ink);
+    padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+  }
 }
 .title {
   font-family: var(--font-struct);

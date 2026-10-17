@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button, Tabs, Toggle, type TabItem } from "./components";
 import { KeySettings } from "./features/settings";
 import { useMode, setMode } from "./lib/mode";
@@ -28,6 +28,10 @@ export function AppShell() {
     { id: "projects", label: t("shell.tab.projects") },
     { id: "compose", label: t("shell.tab.compose") },
   ];
+
+  // Wake up the Render backend on mount — it sleeps on the free tier after inactivity,
+  // and the first cold-start request would otherwise fail mid-generation.
+  useEffect(() => { fetch("/healthz").catch(() => {}); }, []);
 
   const openSettings = () => setSettingsOpen(true);
   const handleModeToggle = (wantLive: boolean) => {

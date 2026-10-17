@@ -27,7 +27,7 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
   const saved = getKey();
   const [provider, setProvider] = useState<Provider>(saved?.provider ?? "gemini");
   const [keyInput, setKeyInput] = useState("");
-  const [persist, setPersist] = useState(() => !!localStorage.getItem("ovando_provider_key"));
+  const [persist, setPersist] = useState(true);
   const [state, setState] = useState<State>("idle");
 
   // Reset form when modal opens
@@ -36,10 +36,20 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
     const k = getKey();
     setProvider(k?.provider ?? "gemini");
     setKeyInput("");
-    setPersist(!!localStorage.getItem("ovando_provider_key"));
+    setPersist(true);
     setState(k ? "ok" : "idle");
   }, [open]);
 
+  // Save the key immediately — no provider roundtrip. The key is validated on first
+  // generation attempt; if it fails the error shows inline then.
+  const save = useCallback(() => {
+    const trimmed = keyInput.trim();
+    if (!trimmed) { setState({ error: t("key.pasteFirst") }); return; }
+    setKey(provider, trimmed, persist);
+    setState("ok");
+  }, [provider, keyInput, persist, t]);
+
+  // Optional: verify the key directly against the provider API before saving.
   const check = useCallback(async () => {
     const trimmed = keyInput.trim();
     if (!trimmed) { setState({ error: t("key.pasteFirst") }); return; }
@@ -84,11 +94,19 @@ export function KeySettings({ open, onClose }: KeySettingsProps) {
           )}
           <Button variant="ghost" onClick={onClose}>{t("key.close")}</Button>
           <Button
-            variant="primary"
+            variant="ghost"
             onClick={() => void check()}
             disabled={isChecking || !keyInput.trim()}
+            title={t("key.check.tooltip")}
           >
             {isChecking ? t("key.checking") : t("key.check")}
+          </Button>
+          <Button
+            variant="primary"
+            onClick={save}
+            disabled={!keyInput.trim()}
+          >
+            {t("key.save")}
           </Button>
         </div>
       }
